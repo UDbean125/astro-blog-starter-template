@@ -8,6 +8,10 @@ import node from "@astrojs/node";
 export default defineConfig({
 	site: "https://example.com",
 	output: "server",
+	server: {
+		host: "0.0.0.0",
+		port: 4321,
+	},
 	integrations: [mdx(), sitemap()],
 	adapter: node({
 		mode: "standalone",
