@@ -13,8 +13,8 @@
 	},
 	"dependencies": {
 		"@anthropic-ai/sdk": "^0.88.0",
-		"@astrojs/cloudflare": "12.6.12",
 		"@astrojs/mdx": "4.3.12",
+		"@astrojs/node": "^9.5.5",
 		"@astrojs/rss": "4.0.14",
 		"@astrojs/sitemap": "3.6.0",
 		"astro": "5.16.2",
@@ -27,11 +27,9 @@
 	"scripts": {
 		"astro": "astro",
 		"build": "astro build",
-		"cf-typegen": "wrangler types",
-		"check": "astro build && tsc && wrangler deploy --dry-run",
-		"deploy": "wrangler deploy",
+		"start": "node ./dist/server/entry.mjs",
 		"dev": "astro dev",
-		"preview": "astro build && wrangler dev"
+		"preview": "astro build && node ./dist/server/entry.mjs"
 	},
 	"type": "module"
 }

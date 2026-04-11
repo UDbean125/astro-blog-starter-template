@@ -125,7 +125,7 @@ async function fetchFeed(url: string, name: string, category: string): Promise<N
   }
 }
 
-export const POST: APIRoute = async ({ request, locals }) => {
+export const POST: APIRoute = async ({ request }) => {
   const headers = { 'Content-Type': 'application/json' };
 
   try {
@@ -136,12 +136,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return new Response(JSON.stringify({ error: 'Please select at least one category.' }), { status: 400, headers });
     }
 
-    // Resolve API key from Cloudflare runtime env or Astro env
-    const apiKey = (locals as any).runtime?.env?.ANTHROPIC_API_KEY || import.meta.env.ANTHROPIC_API_KEY;
+    // Resolve API key from environment
+    const apiKey = process.env.ANTHROPIC_API_KEY || import.meta.env.ANTHROPIC_API_KEY;
 
     if (!apiKey) {
       return new Response(JSON.stringify({
-        error: 'ANTHROPIC_API_KEY is not configured. Add it to .dev.vars (local) or set it as a Cloudflare secret (production).',
+        error: 'ANTHROPIC_API_KEY is not configured. Set it as an environment variable on your server.',
       }), { status: 500, headers });
     }
 
