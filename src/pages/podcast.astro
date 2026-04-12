@@ -601,6 +601,14 @@ import Footer from '../components/Footer.astro';
 				}
 			});
 
+			voiceSelect.addEventListener('change', () => {
+				if (isPlaying && !isPaused) {
+					const idx = currentIndex;
+					speechSynthesis.cancel();
+					playFrom(idx);
+				}
+			});
+
 			// Click on progress bar to jump
 			progressBar.addEventListener('click', (e) => {
 				const rect = progressBar.getBoundingClientRect();
