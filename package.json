@@ -18,6 +18,7 @@
 		"@astrojs/rss": "^4.0.18",
 		"@astrojs/sitemap": "^3.7.2",
 		"astro": "^5.18.1",
+		"msedge-tts": "^2.0.4",
 		"typescript": "5.9.3"
 	},
 	"devDependencies": {

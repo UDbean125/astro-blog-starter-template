@@ -65,6 +65,28 @@ import Footer from '../components/Footer.astro';
 				height: 18px;
 			}
 
+			/* Voice selection */
+			.voice-picker {
+				background: rgba(var(--gray-light), 0.5);
+				border-radius: 12px;
+				padding: 1.5rem;
+				margin-bottom: 1.5rem;
+			}
+			.voice-picker h3 {
+				margin: 0 0 0.75rem 0;
+				font-size: 1.1rem;
+			}
+			.voice-picker select {
+				width: 100%;
+				padding: 0.6rem 0.75rem;
+				font-size: 1rem;
+				font-family: 'Atkinson', sans-serif;
+				border: 2px solid rgb(var(--gray-light));
+				border-radius: 8px;
+				background: white;
+				cursor: pointer;
+			}
+
 			/* Generate button */
 			.generate-btn {
 				display: block;
@@ -137,90 +159,23 @@ import Footer from '../components/Footer.astro';
 				margin: 0 0 1.25rem 0;
 			}
 
-			/* Controls bar */
-			.controls {
-				display: flex;
-				align-items: center;
-				gap: 0.75rem;
+			/* Audio player */
+			.audio-container {
 				background: rgb(var(--black));
-				padding: 0.75rem 1rem;
 				border-radius: 12px;
+				padding: 1.25rem;
 				margin-bottom: 1.5rem;
-				flex-wrap: wrap;
 			}
-			.control-btn {
-				width: 44px;
-				height: 44px;
-				border: none;
-				border-radius: 50%;
-				background: var(--accent);
-				color: white;
-				font-size: 1.1rem;
-				cursor: pointer;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				flex-shrink: 0;
-				transition: background 0.15s;
+			.audio-container audio {
+				width: 100%;
+				height: 48px;
+				border-radius: 8px;
 			}
-			.control-btn:hover {
-				background: var(--accent-dark);
-			}
-			.control-btn.stop {
-				background: rgba(255,255,255,0.15);
-			}
-			.control-btn.stop:hover {
-				background: rgba(255,255,255,0.25);
-			}
-
-			/* Progress */
-			.progress-container {
-				flex: 1;
-				min-width: 150px;
-			}
-			.progress-bar {
-				height: 6px;
-				background: rgba(255,255,255,0.15);
-				border-radius: 3px;
-				overflow: hidden;
-				cursor: pointer;
-			}
-			.progress-fill {
-				height: 100%;
-				background: var(--accent);
-				width: 0%;
-				transition: width 0.3s ease;
-				border-radius: 3px;
-			}
-			.progress-time {
+			.audio-status {
 				color: rgba(255,255,255,0.6);
-				font-size: 0.75rem;
-				margin-top: 0.25rem;
-			}
-
-			/* Speed & voice controls */
-			.playback-options {
-				display: flex;
-				gap: 0.5rem;
-				align-items: center;
-			}
-			.playback-options label {
-				color: rgba(255,255,255,0.6);
-				font-size: 0.8rem;
-			}
-			.playback-options select {
-				background: rgba(255,255,255,0.1);
-				color: white;
-				border: 1px solid rgba(255,255,255,0.2);
-				border-radius: 6px;
-				padding: 0.3rem 0.4rem;
-				font-size: 0.8rem;
-				font-family: 'Atkinson', sans-serif;
-				cursor: pointer;
-			}
-			.playback-options select option {
-				background: rgb(var(--black));
-				color: white;
+				font-size: 0.85rem;
+				text-align: center;
+				margin-top: 0.5rem;
 			}
 
 			/* Script display */
@@ -233,25 +188,10 @@ import Footer from '../components/Footer.astro';
 				background: white;
 				scroll-behavior: smooth;
 			}
-			.paragraph {
-				padding: 0.75rem 1rem;
-				border-radius: 8px;
-				margin-bottom: 0.5rem;
-				line-height: 1.6;
+			.script-text {
+				line-height: 1.7;
 				font-size: 1rem;
-				cursor: pointer;
-				transition: all 0.2s ease;
-				border-left: 3px solid transparent;
-			}
-			.paragraph:hover {
-				background: rgba(var(--gray-light), 0.4);
-			}
-			.paragraph.active {
-				background: rgba(35, 55, 255, 0.06);
-				border-left-color: var(--accent);
-			}
-			.paragraph.spoken {
-				opacity: 0.5;
+				white-space: pre-wrap;
 			}
 
 			/* Actions */
@@ -259,6 +199,7 @@ import Footer from '../components/Footer.astro';
 				display: flex;
 				gap: 0.75rem;
 				margin-top: 1rem;
+				flex-wrap: wrap;
 			}
 			.action-btn {
 				padding: 0.6rem 1.2rem;
@@ -281,14 +222,6 @@ import Footer from '../components/Footer.astro';
 			@media (max-width: 720px) {
 				.category-grid {
 					grid-template-columns: 1fr;
-				}
-				.controls {
-					gap: 0.5rem;
-					padding: 0.5rem 0.75rem;
-				}
-				.playback-options {
-					width: 100%;
-					justify-content: center;
 				}
 			}
 		</style>
@@ -329,13 +262,21 @@ import Footer from '../components/Footer.astro';
 				</div>
 			</section>
 
+			<!-- Voice Selection -->
+			<section class="voice-picker">
+				<h3>Choose a voice</h3>
+				<select id="voice">
+					<option value="en-US-AndrewNeural">Andrew (Male, US)</option>
+				</select>
+			</section>
+
 			<button id="generate-btn" class="generate-btn">Generate My Podcast</button>
 
 			<!-- Loading State -->
 			<section id="loading" class="loading hidden">
 				<div class="spinner"></div>
-				<p>Fetching the latest news and writing your podcast...</p>
-				<p class="sub">This usually takes 20-40 seconds</p>
+				<p id="loading-text">Fetching the latest news and writing your podcast...</p>
+				<p class="sub" id="loading-sub">This usually takes 20-40 seconds</p>
 			</section>
 
 			<!-- Error State -->
@@ -346,45 +287,19 @@ import Footer from '../components/Footer.astro';
 				<h2 id="podcast-title"></h2>
 				<p id="podcast-meta" class="meta"></p>
 
-				<div class="controls">
-					<button id="play-btn" class="control-btn" title="Play / Pause" aria-label="Play">
-						<svg id="play-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-						<svg id="pause-icon" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="3" width="4" height="18"/><rect x="15" y="3" width="4" height="18"/></svg>
-					</button>
-					<button id="stop-btn" class="control-btn stop" title="Stop" aria-label="Stop">
-						<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
-					</button>
-
-					<div class="progress-container">
-						<div class="progress-bar" id="progress-bar">
-							<div id="progress-fill" class="progress-fill"></div>
-						</div>
-						<div class="progress-time" id="progress-time">Paragraph 0 / 0</div>
-					</div>
-
-					<div class="playback-options">
-						<label for="speed">Speed</label>
-						<select id="speed">
-							<option value="0.75">0.75x</option>
-							<option value="0.9">0.9x</option>
-							<option value="1" selected>1x</option>
-							<option value="1.15">1.15x</option>
-							<option value="1.3">1.3x</option>
-							<option value="1.5">1.5x</option>
-							<option value="2">2x</option>
-						</select>
-						<label for="voice">Voice</label>
-						<select id="voice"></select>
-					</div>
+				<div class="audio-container">
+					<audio id="audio-player" controls preload="auto"></audio>
+					<div id="audio-status" class="audio-status"></div>
 				</div>
 
-				<div class="script-container" id="script-container">
-					<div id="script"></div>
+				<div class="script-container">
+					<div id="script" class="script-text"></div>
 				</div>
 
 				<div class="actions">
+					<button id="download-audio-btn" class="action-btn">Download Audio (MP3)</button>
 					<button id="download-btn" class="action-btn">Download Script</button>
-					<button id="copy-btn" class="action-btn">Copy to Clipboard</button>
+					<button id="copy-btn" class="action-btn">Copy Script</button>
 				</div>
 			</section>
 		</main>
@@ -394,51 +309,42 @@ import Footer from '../components/Footer.astro';
 			// ---- Elements ----
 			const generateBtn = document.getElementById('generate-btn') as HTMLButtonElement;
 			const loadingEl = document.getElementById('loading')!;
+			const loadingText = document.getElementById('loading-text')!;
+			const loadingSub = document.getElementById('loading-sub')!;
 			const errorEl = document.getElementById('error')!;
 			const playerEl = document.getElementById('player')!;
-			const playBtn = document.getElementById('play-btn')!;
-			const stopBtn = document.getElementById('stop-btn')!;
-			const playIcon = document.getElementById('play-icon')!;
-			const pauseIcon = document.getElementById('pause-icon')!;
-			const progressFill = document.getElementById('progress-fill')!;
-			const progressTime = document.getElementById('progress-time')!;
-			const progressBar = document.getElementById('progress-bar')!;
-			const speedSelect = document.getElementById('speed') as HTMLSelectElement;
 			const voiceSelect = document.getElementById('voice') as HTMLSelectElement;
+			const audioPlayer = document.getElementById('audio-player') as HTMLAudioElement;
+			const audioStatus = document.getElementById('audio-status')!;
 			const scriptEl = document.getElementById('script')!;
-			const scriptContainer = document.getElementById('script-container')!;
 			const titleEl = document.getElementById('podcast-title')!;
 			const metaEl = document.getElementById('podcast-meta')!;
 			const downloadBtn = document.getElementById('download-btn')!;
+			const downloadAudioBtn = document.getElementById('download-audio-btn')!;
 			const copyBtn = document.getElementById('copy-btn')!;
 
 			// ---- State ----
 			let podcastScript = '';
-			let paragraphs: string[] = [];
-			let currentIndex = -1;
-			let isPlaying = false;
-			let isPaused = false;
+			let audioUrl = '';
 
-			// ---- Voice loading ----
-			function loadVoices() {
-				const voices = speechSynthesis.getVoices();
-				if (voices.length === 0) return;
-
-				voiceSelect.innerHTML = '';
-				const english = voices.filter(v => v.lang.startsWith('en'));
-				const sorted = [...english, ...voices.filter(v => !v.lang.startsWith('en'))];
-
-				let defaultIndex = 0;
-				sorted.forEach((voice, i) => {
-					const opt = document.createElement('option');
-					opt.value = voices.indexOf(voice).toString();
-					opt.textContent = `${voice.name} (${voice.lang})`;
-					voiceSelect.appendChild(opt);
-					if (voice.default && voice.lang.startsWith('en')) defaultIndex = i;
-				});
-				voiceSelect.selectedIndex = defaultIndex;
+			// ---- Load voices from server ----
+			async function loadVoices() {
+				try {
+					const res = await fetch('/api/tts');
+					const voices = await res.json();
+					voiceSelect.innerHTML = '';
+					for (const voice of voices) {
+						const opt = document.createElement('option');
+						opt.value = voice.id;
+						opt.textContent = voice.name;
+						voiceSelect.appendChild(opt);
+					}
+					// Default to Andrew
+					voiceSelect.value = 'en-US-AndrewNeural';
+				} catch {
+					// Keep the default option
+				}
 			}
-			speechSynthesis.onvoiceschanged = loadVoices;
 			loadVoices();
 
 			// ---- Generate ----
@@ -451,13 +357,22 @@ import Footer from '../components/Footer.astro';
 					return;
 				}
 
-				stopPlayback();
+				// Clean up previous audio
+				if (audioUrl) {
+					URL.revokeObjectURL(audioUrl);
+					audioUrl = '';
+				}
+
 				hideError();
 				playerEl.classList.add('hidden');
 				loadingEl.classList.remove('hidden');
 				generateBtn.disabled = true;
 
 				try {
+					// Step 1: Generate the podcast script
+					loadingText.textContent = 'Fetching the latest news and writing your podcast...';
+					loadingSub.textContent = 'Step 1 of 2 — This usually takes 20-40 seconds';
+
 					const res = await fetch('/api/podcast', {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
@@ -467,16 +382,43 @@ import Footer from '../components/Footer.astro';
 
 					if (!res.ok || data.error) {
 						showError(data.error || 'Failed to generate podcast.');
+						loadingEl.classList.add('hidden');
+						generateBtn.disabled = false;
 						return;
 					}
 
 					podcastScript = data.script;
-					paragraphs = podcastScript.split('\n\n').filter((p: string) => p.trim());
 
 					titleEl.textContent = data.title;
-					metaEl.textContent = `${data.storiesCount} stories \u00B7 ${data.categories.join(', ')} \u00B7 ~${data.estimatedMinutes} min \u00B7 ${paragraphs.length} paragraphs`;
+					metaEl.textContent = `${data.storiesCount} stories \u00B7 ${data.categories.join(', ')} \u00B7 ~${data.estimatedMinutes} min`;
+					scriptEl.textContent = podcastScript;
 
-					renderScript();
+					// Step 2: Generate audio
+					loadingText.textContent = 'Generating natural audio with selected voice...';
+					loadingSub.textContent = 'Step 2 of 2 — Almost there...';
+
+					const selectedVoice = voiceSelect.value;
+					const ttsRes = await fetch('/api/tts', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ text: podcastScript, voice: selectedVoice }),
+					});
+
+					if (!ttsRes.ok) {
+						// Audio failed but we still have the script
+						const ttsErr = await ttsRes.json().catch(() => ({ error: 'Audio generation failed' }));
+						audioStatus.textContent = `Audio unavailable: ${ttsErr.error}`;
+						audioPlayer.classList.add('hidden');
+						downloadAudioBtn.classList.add('hidden');
+					} else {
+						const audioBlob = await ttsRes.blob();
+						audioUrl = URL.createObjectURL(audioBlob);
+						audioPlayer.src = audioUrl;
+						audioPlayer.classList.remove('hidden');
+						downloadAudioBtn.classList.remove('hidden');
+						audioStatus.textContent = '';
+					}
+
 					playerEl.classList.remove('hidden');
 
 				} catch {
@@ -487,168 +429,17 @@ import Footer from '../components/Footer.astro';
 				}
 			});
 
-			// ---- Script rendering ----
-			function renderScript() {
-				scriptEl.innerHTML = '';
-				paragraphs.forEach((text, i) => {
-					const div = document.createElement('div');
-					div.className = 'paragraph';
-					div.dataset.index = i.toString();
-					div.textContent = text;
-					div.addEventListener('click', () => {
-						stopPlayback();
-						playFrom(i);
-					});
-					scriptEl.appendChild(div);
-				});
-				updateProgress();
-			}
-
-			// ---- Playback ----
-			function playFrom(index: number) {
-				currentIndex = index;
-				isPlaying = true;
-				isPaused = false;
-				showPauseIcon();
-				speakParagraph(index);
-			}
-
-			function speakParagraph(index: number) {
-				if (index >= paragraphs.length || !isPlaying) {
-					isPlaying = false;
-					isPaused = false;
-					currentIndex = paragraphs.length;
-					showPlayIcon();
-					updateProgress();
-					return;
-				}
-
-				currentIndex = index;
-				highlightParagraph(index);
-				updateProgress();
-
-				const utter = new SpeechSynthesisUtterance(paragraphs[index]);
-				utter.rate = parseFloat(speedSelect.value);
-
-				const voiceIdx = parseInt(voiceSelect.value);
-				const voices = speechSynthesis.getVoices();
-				if (!isNaN(voiceIdx) && voices[voiceIdx]) {
-					utter.voice = voices[voiceIdx];
-				}
-
-				utter.onend = () => {
-					if (isPlaying && !isPaused) {
-						speakParagraph(index + 1);
-					}
-				};
-
-				utter.onerror = (e) => {
-					if ((e as any).error !== 'canceled' && (e as any).error !== 'interrupted') {
-						console.error('TTS error:', e);
-					}
-				};
-
-				speechSynthesis.speak(utter);
-			}
-
-			function highlightParagraph(index: number) {
-				const all = scriptEl.querySelectorAll('.paragraph');
-				all.forEach((el, i) => {
-					el.classList.toggle('active', i === index);
-					el.classList.toggle('spoken', i < index);
-				});
-
-				const active = scriptEl.querySelector('.paragraph.active') as HTMLElement;
-				if (active) {
-					const containerRect = scriptContainer.getBoundingClientRect();
-					const activeRect = active.getBoundingClientRect();
-					const offset = activeRect.top - containerRect.top - containerRect.height / 3;
-					scriptContainer.scrollTop += offset;
-				}
-			}
-
-			function updateProgress() {
-				const total = paragraphs.length;
-				const current = Math.max(0, currentIndex);
-				const fraction = total > 0 ? current / total : 0;
-				progressFill.style.width = `${fraction * 100}%`;
-				progressTime.textContent = `Paragraph ${current} / ${total}`;
-			}
-
-			// ---- Controls ----
-			playBtn.addEventListener('click', () => {
-				if (isPlaying && !isPaused) {
-					speechSynthesis.pause();
-					isPaused = true;
-					showPlayIcon();
-				} else if (isPaused) {
-					speechSynthesis.resume();
-					isPaused = false;
-					showPauseIcon();
-				} else {
-					const start = currentIndex >= 0 && currentIndex < paragraphs.length ? currentIndex : 0;
-					playFrom(start);
-				}
-			});
-
-			stopBtn.addEventListener('click', stopPlayback);
-
-			speedSelect.addEventListener('change', () => {
-				if (isPlaying && !isPaused) {
-					const idx = currentIndex;
-					speechSynthesis.cancel();
-					playFrom(idx);
-				}
-			});
-
-			voiceSelect.addEventListener('change', () => {
-				if (isPlaying && !isPaused) {
-					const idx = currentIndex;
-					speechSynthesis.cancel();
-					playFrom(idx);
-				}
-			});
-
-			// Click on progress bar to jump
-			progressBar.addEventListener('click', (e) => {
-				const rect = progressBar.getBoundingClientRect();
-				const fraction = (e.clientX - rect.left) / rect.width;
-				const target = Math.floor(fraction * paragraphs.length);
-				if (target >= 0 && target < paragraphs.length) {
-					const wasPlaying = isPlaying;
-					stopPlayback();
-					if (wasPlaying) {
-						playFrom(target);
-					} else {
-						currentIndex = target;
-						highlightParagraph(target);
-						updateProgress();
-					}
-				}
-			});
-
-			function stopPlayback() {
-				speechSynthesis.cancel();
-				isPlaying = false;
-				isPaused = false;
-				currentIndex = -1;
-				showPlayIcon();
-				scriptEl.querySelectorAll('.paragraph').forEach(el => {
-					el.classList.remove('active', 'spoken');
-				});
-				updateProgress();
-			}
-
-			function showPlayIcon() {
-				playIcon.classList.remove('hidden');
-				pauseIcon.classList.add('hidden');
-			}
-			function showPauseIcon() {
-				playIcon.classList.add('hidden');
-				pauseIcon.classList.remove('hidden');
-			}
-
 			// ---- Download & Copy ----
+			downloadAudioBtn.addEventListener('click', () => {
+				if (!audioUrl) return;
+				const a = document.createElement('a');
+				a.href = audioUrl;
+				a.download = `daily-digest-${new Date().toISOString().split('T')[0]}.mp3`;
+				document.body.appendChild(a);
+				a.click();
+				document.body.removeChild(a);
+			});
+
 			downloadBtn.addEventListener('click', () => {
 				const blob = new Blob([podcastScript], { type: 'text/plain' });
 				const url = URL.createObjectURL(blob);
