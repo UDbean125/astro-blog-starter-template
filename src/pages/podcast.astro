@@ -7,308 +7,139 @@ import Footer from '../components/Footer.astro';
 <!doctype html>
 <html lang="en">
 	<head>
-		<BaseHead title="Bryan's Daily Podcast | News Podcast" description="Your personalized 10-minute news podcast covering AI, Apple, Autodesk, and your favorite sports teams" />
+		<BaseHead title="Bryan's Daily Podcast" description="Your personalized 10-minute news podcast covering AI, Apple, Autodesk, and your favorite sports teams" />
 		<style>
-			.podcast-header {
-				text-align: center;
-				margin-bottom: 2rem;
-			}
-			.podcast-header h1 {
-				font-size: 2.4rem;
-				margin-bottom: 0.25rem;
-			}
-			.podcast-header .subtitle {
-				color: rgb(var(--gray));
-				font-size: 1.1rem;
-				margin: 0;
-			}
+			.podcast-header { text-align: center; margin-bottom: 2rem; }
+			.podcast-header h1 { font-size: 2.4rem; margin-bottom: 0.25rem; }
+			.podcast-header .subtitle { color: rgb(var(--gray)); font-size: 1.1rem; margin: 0; }
 
-			/* Category selection */
-			.categories {
+			.categories, .voice-picker {
 				background: rgba(var(--gray-light), 0.5);
 				border-radius: 12px;
 				padding: 1.5rem;
 				margin-bottom: 1.5rem;
 			}
-			.categories h3 {
-				margin: 0 0 1rem 0;
-				font-size: 1.1rem;
-			}
+			.categories h3, .voice-picker h3 { margin: 0 0 1rem 0; font-size: 1.1rem; }
 			.category-grid {
 				display: grid;
 				grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
 				gap: 0.75rem;
 			}
 			.category-grid label {
-				display: flex;
-				align-items: center;
-				gap: 0.5rem;
-				cursor: pointer;
-				padding: 0.5rem 0.75rem;
-				border-radius: 8px;
-				background: white;
-				border: 2px solid rgb(var(--gray-light));
-				transition: all 0.15s ease;
-				font-size: 0.95rem;
-				user-select: none;
+				display: flex; align-items: center; gap: 0.5rem; cursor: pointer;
+				padding: 0.5rem 0.75rem; border-radius: 8px; background: white;
+				border: 2px solid rgb(var(--gray-light)); transition: all 0.15s ease;
+				font-size: 0.95rem; user-select: none;
 			}
-			.category-grid label:hover {
-				border-color: var(--accent);
-			}
-			.category-grid label:has(input:checked) {
-				border-color: var(--accent);
-				background: rgba(35, 55, 255, 0.05);
-			}
-			.category-grid input[type="checkbox"] {
-				accent-color: var(--accent);
-				width: 18px;
-				height: 18px;
-			}
+			.category-grid label:hover { border-color: var(--accent); }
+			.category-grid label:has(input:checked) { border-color: var(--accent); background: rgba(35, 55, 255, 0.05); }
+			.category-grid input[type="checkbox"] { accent-color: var(--accent); width: 18px; height: 18px; }
 
-			/* Voice selection */
-			.voice-picker {
-				background: rgba(var(--gray-light), 0.5);
-				border-radius: 12px;
-				padding: 1.5rem;
-				margin-bottom: 1.5rem;
-			}
-			.voice-picker h3 {
-				margin: 0 0 0.75rem 0;
-				font-size: 1.1rem;
-			}
 			.voice-picker select {
-				width: 100%;
-				padding: 0.6rem 0.75rem;
-				font-size: 1rem;
-				font-family: 'Atkinson', sans-serif;
-				border: 2px solid rgb(var(--gray-light));
-				border-radius: 8px;
-				background: white;
-				cursor: pointer;
+				width: 100%; padding: 0.6rem 0.75rem; font-size: 1rem;
+				font-family: 'Atkinson', sans-serif; border: 2px solid rgb(var(--gray-light));
+				border-radius: 8px; background: white; cursor: pointer;
 			}
 
-			/* Generate button */
 			.generate-btn {
-				display: block;
-				width: 100%;
-				padding: 1rem;
-				font-size: 1.15rem;
-				font-weight: 700;
-				font-family: 'Atkinson', sans-serif;
-				background: var(--accent);
-				color: white;
-				border: none;
-				border-radius: 10px;
-				cursor: pointer;
-				transition: all 0.15s ease;
+				display: block; width: 100%; padding: 1rem; font-size: 1.15rem;
+				font-weight: 700; font-family: 'Atkinson', sans-serif; background: var(--accent);
+				color: white; border: none; border-radius: 10px; cursor: pointer; transition: all 0.15s ease;
 			}
-			.generate-btn:hover:not(:disabled) {
-				background: var(--accent-dark);
-				transform: translateY(-1px);
-			}
-			.generate-btn:disabled {
-				opacity: 0.5;
-				cursor: not-allowed;
-			}
+			.generate-btn:hover:not(:disabled) { background: var(--accent-dark); transform: translateY(-1px); }
+			.generate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-			/* Loading */
-			.loading {
-				text-align: center;
-				padding: 3rem 1rem;
-			}
+			.loading { text-align: center; padding: 3rem 1rem; }
 			.spinner {
-				width: 48px;
-				height: 48px;
-				border: 4px solid rgb(var(--gray-light));
-				border-top-color: var(--accent);
-				border-radius: 50%;
-				animation: spin 0.8s linear infinite;
+				width: 48px; height: 48px; border: 4px solid rgb(var(--gray-light));
+				border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite;
 				margin: 0 auto 1rem;
 			}
 			@keyframes spin { to { transform: rotate(360deg); } }
-			.loading p {
-				margin: 0.25rem 0;
-				color: rgb(var(--gray-dark));
-			}
-			.loading .sub {
-				font-size: 0.9rem;
-				color: rgb(var(--gray));
-			}
+			.loading p { margin: 0.25rem 0; color: rgb(var(--gray-dark)); }
+			.loading .sub { font-size: 0.9rem; color: rgb(var(--gray)); }
 
-			/* Error */
 			.error-msg {
-				background: #fef2f2;
-				border: 1px solid #fca5a5;
-				color: #991b1b;
-				padding: 1rem 1.25rem;
-				border-radius: 8px;
-				margin-bottom: 1rem;
+				background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b;
+				padding: 1rem 1.25rem; border-radius: 8px; margin-bottom: 1rem;
+			}
+			.success-msg {
+				background: #f0fdf4; border: 1px solid #86efac; color: #166534;
+				padding: 1rem 1.25rem; border-radius: 8px; margin-bottom: 1rem;
 			}
 
-			/* Player */
-			.player {
-				margin-top: 2rem;
-			}
-			.player h2 {
-				font-size: 1.5rem;
-				margin-bottom: 0.25rem;
-			}
-			.player .meta {
-				color: rgb(var(--gray));
-				font-size: 0.9rem;
-				margin: 0 0 1.25rem 0;
-			}
+			.player { margin-top: 2rem; }
+			.player h2 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+			.player .meta { color: rgb(var(--gray)); font-size: 0.9rem; margin: 0 0 1.25rem 0; }
 
-			/* Audio player */
 			.audio-container {
-				background: rgb(var(--black));
-				border-radius: 12px;
-				padding: 1.25rem;
-				margin-bottom: 1.5rem;
+				background: rgb(var(--black)); border-radius: 12px;
+				padding: 1.25rem; margin-bottom: 1.5rem;
 			}
-			.audio-container audio {
-				width: 100%;
-				height: 48px;
-				border-radius: 8px;
-			}
-			.audio-status {
-				color: rgba(255,255,255,0.6);
-				font-size: 0.85rem;
-				text-align: center;
-				margin-top: 0.5rem;
-			}
+			.audio-container audio { width: 100%; height: 48px; border-radius: 8px; }
+			.audio-status { color: rgba(255,255,255,0.6); font-size: 0.85rem; text-align: center; margin-top: 0.5rem; }
 
-			/* Script display */
 			.script-container {
-				max-height: 500px;
-				overflow-y: auto;
-				border: 1px solid rgb(var(--gray-light));
-				border-radius: 12px;
-				padding: 1.5rem;
-				background: white;
-				scroll-behavior: smooth;
+				max-height: 500px; overflow-y: auto; border: 1px solid rgb(var(--gray-light));
+				border-radius: 12px; padding: 1.5rem; background: white; scroll-behavior: smooth;
 			}
-			.script-text {
-				line-height: 1.7;
-				font-size: 1rem;
-				white-space: pre-wrap;
-			}
+			.script-text { line-height: 1.7; font-size: 1rem; white-space: pre-wrap; }
 
-			/* Actions */
-			.actions {
-				display: flex;
-				gap: 0.75rem;
-				margin-top: 1rem;
-				flex-wrap: wrap;
-			}
+			.actions { display: flex; gap: 0.75rem; margin-top: 1rem; flex-wrap: wrap; }
 			.action-btn {
-				padding: 0.6rem 1.2rem;
-				font-size: 0.9rem;
-				font-family: 'Atkinson', sans-serif;
-				border: 2px solid rgb(var(--gray-light));
-				background: white;
-				color: rgb(var(--gray-dark));
-				border-radius: 8px;
-				cursor: pointer;
-				transition: all 0.15s;
+				padding: 0.6rem 1.2rem; font-size: 0.9rem; font-family: 'Atkinson', sans-serif;
+				border: 2px solid rgb(var(--gray-light)); background: white; color: rgb(var(--gray-dark));
+				border-radius: 8px; cursor: pointer; transition: all 0.15s;
 			}
-			.action-btn:hover {
-				border-color: var(--accent);
-				color: var(--accent);
-			}
-			.action-btn.published {
-				border-color: #22c55e;
-				color: #22c55e;
-				cursor: default;
-			}
-
-			.feed-info {
-				background: rgba(34, 197, 94, 0.08);
-				border: 1px solid #86efac;
-				border-radius: 8px;
-				padding: 1rem 1.25rem;
-				margin-top: 1rem;
-				font-size: 0.9rem;
-			}
-			.feed-info code {
-				background: rgba(var(--gray-light), 0.6);
-				padding: 0.2rem 0.5rem;
-				border-radius: 4px;
-				font-size: 0.85rem;
-				word-break: break-all;
-			}
+			.action-btn:hover { border-color: var(--accent); color: var(--accent); }
 
 			.hidden { display: none !important; }
 
 			@media (max-width: 720px) {
-				.category-grid {
-					grid-template-columns: 1fr;
-				}
+				.category-grid { grid-template-columns: 1fr; }
 			}
 		</style>
 	</head>
 	<body>
 		<Header />
 		<main>
-			<!-- Header -->
 			<section class="podcast-header">
 				<h1>Bryan's Daily Podcast</h1>
 				<p class="subtitle">Your personalized 10-minute news podcast, generated on demand</p>
 			</section>
 
-			<!-- Category Selection -->
 			<section class="categories">
 				<h3>Select your topics</h3>
 				<div class="category-grid">
-					<label>
-						<input type="checkbox" name="category" value="ai" checked />
-						AI & Claude Code
-					</label>
-					<label>
-						<input type="checkbox" name="category" value="apple" checked />
-						Apple
-					</label>
-					<label>
-						<input type="checkbox" name="category" value="autodesk" checked />
-						Graitec & Autodesk
-					</label>
-					<label>
-						<input type="checkbox" name="category" value="detroit_sports" checked />
-						Detroit Sports
-					</label>
-					<label>
-						<input type="checkbox" name="category" value="college_sports" checked />
-						College Sports
-					</label>
+					<label><input type="checkbox" name="category" value="ai" checked /> AI & Claude Code</label>
+					<label><input type="checkbox" name="category" value="apple" checked /> Apple</label>
+					<label><input type="checkbox" name="category" value="autodesk" checked /> Graitec & Autodesk</label>
+					<label><input type="checkbox" name="category" value="detroit_sports" checked /> Detroit Sports</label>
+					<label><input type="checkbox" name="category" value="college_sports" checked /> College Sports</label>
 				</div>
 			</section>
 
-			<!-- Voice Selection -->
 			<section class="voice-picker">
 				<h3>Choose a voice</h3>
-				<select id="voice">
-					<option value="en-US-AndrewNeural">Andrew (Male, US)</option>
-				</select>
+				<select id="voice"><option value="en-US-AndrewNeural">Andrew (Male, US)</option></select>
 			</section>
 
 			<button id="generate-btn" class="generate-btn">Generate My Podcast</button>
 
-			<!-- Loading State -->
 			<section id="loading" class="loading hidden">
 				<div class="spinner"></div>
-				<p id="loading-text">Fetching the latest news and writing your podcast...</p>
-				<p class="sub" id="loading-sub">This usually takes 20-40 seconds</p>
+				<p id="loading-text">Starting...</p>
+				<p class="sub" id="loading-sub"></p>
 			</section>
 
-			<!-- Error State -->
 			<div id="error" class="error-msg hidden"></div>
+			<div id="success" class="success-msg hidden"></div>
 
-			<!-- Podcast Player -->
 			<section id="player" class="player hidden">
 				<h2 id="podcast-title"></h2>
 				<p id="podcast-meta" class="meta"></p>
 
-				<div class="audio-container">
+				<div class="audio-container" id="audio-container">
 					<audio id="audio-player" controls preload="auto"></audio>
 					<div id="audio-status" class="audio-status"></div>
 				</div>
@@ -318,32 +149,25 @@ import Footer from '../components/Footer.astro';
 				</div>
 
 				<div class="actions">
-					<button id="publish-btn" class="action-btn">Publish to Podcast Feed</button>
 					<button id="download-audio-btn" class="action-btn">Download Audio (MP3)</button>
 					<button id="download-btn" class="action-btn">Download Script</button>
 					<button id="copy-btn" class="action-btn">Copy Script</button>
-				</div>
-
-				<div id="feed-info" class="feed-info hidden">
-					Episode published! Subscribe in Apple Podcasts:<br>
-					<strong>Open Apple Podcasts &rarr; Library &rarr; top-right menu (...) &rarr; Follow a Show by URL</strong><br><br>
-					Paste this feed URL:<br>
-					<code id="feed-url"></code>
 				</div>
 			</section>
 		</main>
 		<Footer />
 
 		<script>
-			// ---- Elements ----
 			const generateBtn = document.getElementById('generate-btn') as HTMLButtonElement;
 			const loadingEl = document.getElementById('loading')!;
 			const loadingText = document.getElementById('loading-text')!;
 			const loadingSub = document.getElementById('loading-sub')!;
 			const errorEl = document.getElementById('error')!;
+			const successEl = document.getElementById('success')!;
 			const playerEl = document.getElementById('player')!;
 			const voiceSelect = document.getElementById('voice') as HTMLSelectElement;
 			const audioPlayer = document.getElementById('audio-player') as HTMLAudioElement;
+			const audioContainer = document.getElementById('audio-container')!;
 			const audioStatus = document.getElementById('audio-status')!;
 			const scriptEl = document.getElementById('script')!;
 			const titleEl = document.getElementById('podcast-title')!;
@@ -352,112 +176,67 @@ import Footer from '../components/Footer.astro';
 			const downloadAudioBtn = document.getElementById('download-audio-btn')!;
 			const copyBtn = document.getElementById('copy-btn')!;
 
-			// ---- State ----
 			let podcastScript = '';
-			let podcastTitle = '';
-			let podcastMeta = '';
-			let audioUrl = '';
-			let audioBlob: Blob | null = null;
-			const publishBtn = document.getElementById('publish-btn')!;
-			const feedInfo = document.getElementById('feed-info')!;
-			const feedUrlEl = document.getElementById('feed-url')!;
+			let audioFilename = '';
 
-			// ---- Load voices from server ----
-			async function loadVoices() {
-				try {
-					const res = await fetch('/api/tts');
-					const voices = await res.json();
-					voiceSelect.innerHTML = '';
-					for (const voice of voices) {
-						const opt = document.createElement('option');
-						opt.value = voice.id;
-						opt.textContent = voice.name;
-						voiceSelect.appendChild(opt);
-					}
-					// Default to Andrew
-					voiceSelect.value = 'en-US-AndrewNeural';
-				} catch {
-					// Keep the default option
+			// Load voices
+			fetch('/api/podcast').then(r => r.json()).then(voices => {
+				if (!Array.isArray(voices)) return;
+				voiceSelect.innerHTML = '';
+				for (const v of voices) {
+					const opt = document.createElement('option');
+					opt.value = v.id;
+					opt.textContent = v.name;
+					voiceSelect.appendChild(opt);
 				}
-			}
-			loadVoices();
+				voiceSelect.value = 'en-US-AndrewNeural';
+			}).catch(() => {});
 
-			// ---- Generate ----
+			// Generate — one button does everything
 			generateBtn.addEventListener('click', async () => {
 				const checked = document.querySelectorAll<HTMLInputElement>('input[name="category"]:checked');
 				const categories = Array.from(checked).map(el => el.value);
+				if (categories.length === 0) { showError('Please select at least one topic.'); return; }
 
-				if (categories.length === 0) {
-					showError('Please select at least one topic.');
-					return;
-				}
-
-				// Clean up previous audio
-				if (audioUrl) {
-					URL.revokeObjectURL(audioUrl);
-					audioUrl = '';
-				}
-
-				hideError();
+				hideError(); hideSuccess();
 				playerEl.classList.add('hidden');
-				feedInfo.classList.add('hidden');
-				publishBtn.textContent = 'Publish to Podcast Feed';
-				publishBtn.classList.remove('published');
-				publishBtn.removeAttribute('disabled');
 				loadingEl.classList.remove('hidden');
 				generateBtn.disabled = true;
+				loadingText.textContent = 'Fetching news, writing script, generating audio...';
+				loadingSub.textContent = 'This takes about 60-90 seconds — sit tight!';
 
 				try {
-					// Step 1: Generate the podcast script
-					loadingText.textContent = 'Fetching the latest news and writing your podcast...';
-					loadingSub.textContent = 'Step 1 of 2 — This usually takes 20-40 seconds';
-
 					const res = await fetch('/api/podcast', {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({ categories }),
+						body: JSON.stringify({ categories, voice: voiceSelect.value }),
 					});
 					const data = await res.json();
 
 					if (!res.ok || data.error) {
 						showError(data.error || 'Failed to generate podcast.');
-						loadingEl.classList.add('hidden');
-						generateBtn.disabled = false;
 						return;
 					}
 
 					podcastScript = data.script;
-
-					podcastTitle = data.title;
-					podcastMeta = `${data.storiesCount} stories \u00B7 ${data.categories.join(', ')} \u00B7 ~${data.estimatedMinutes} min`;
-					titleEl.textContent = podcastTitle;
-					metaEl.textContent = podcastMeta;
+					audioFilename = data.audioFilename;
+					titleEl.textContent = data.title;
+					metaEl.textContent = `${data.storiesCount} stories \u00B7 ${data.categories.join(', ')} \u00B7 ~${data.estimatedMinutes} min`;
 					scriptEl.textContent = podcastScript;
 
-					// Step 2: Generate audio
-					loadingText.textContent = 'Generating natural audio with selected voice...';
-					loadingSub.textContent = 'Step 2 of 2 — Almost there...';
-
-					const selectedVoice = voiceSelect.value;
-					const ttsRes = await fetch('/api/tts', {
-						method: 'POST',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({ text: podcastScript, voice: selectedVoice }),
-					});
-
-					if (!ttsRes.ok) {
-						// Audio failed but we still have the script
-						const ttsErr = await ttsRes.json().catch(() => ({ error: 'Audio generation failed' }));
-						audioStatus.textContent = `Audio unavailable: ${ttsErr.error}`;
-						audioPlayer.classList.add('hidden');
-						downloadAudioBtn.classList.add('hidden');
-					} else {
-						audioBlob = await ttsRes.blob();
-						audioUrl = URL.createObjectURL(audioBlob);
-						audioPlayer.src = audioUrl;
-						audioPlayer.classList.remove('hidden');
+					if (audioFilename) {
+						audioPlayer.src = `/api/episodes/${audioFilename}`;
+						audioContainer.classList.remove('hidden');
 						downloadAudioBtn.classList.remove('hidden');
 						audioStatus.textContent = '';
+						if (data.published) {
+							showSuccess('Episode published to your podcast feed! It will appear in Apple Podcasts shortly.');
+						}
+					} else {
+						audioStatus.textContent = `Audio: ${data.audioError || 'Generation failed'}`;
+						audioContainer.classList.remove('hidden');
+						audioPlayer.classList.add('hidden');
+						downloadAudioBtn.classList.add('hidden');
 					}
 
 					playerEl.classList.remove('hidden');
@@ -470,88 +249,41 @@ import Footer from '../components/Footer.astro';
 				}
 			});
 
-			// ---- Download & Copy ----
+			// Download audio
 			downloadAudioBtn.addEventListener('click', () => {
-				if (!audioUrl) return;
+				if (!audioFilename) return;
 				const a = document.createElement('a');
-				a.href = audioUrl;
-				a.download = `daily-digest-${new Date().toISOString().split('T')[0]}.mp3`;
+				a.href = `/api/episodes/${audioFilename}`;
+				a.download = `bryans-daily-podcast-${new Date().toISOString().split('T')[0]}.mp3`;
 				document.body.appendChild(a);
 				a.click();
 				document.body.removeChild(a);
 			});
 
+			// Download script
 			downloadBtn.addEventListener('click', () => {
 				const blob = new Blob([podcastScript], { type: 'text/plain' });
 				const url = URL.createObjectURL(blob);
 				const a = document.createElement('a');
 				a.href = url;
-				a.download = `daily-digest-${new Date().toISOString().split('T')[0]}.txt`;
+				a.download = `bryans-daily-podcast-${new Date().toISOString().split('T')[0]}.txt`;
 				document.body.appendChild(a);
 				a.click();
 				document.body.removeChild(a);
 				URL.revokeObjectURL(url);
 			});
 
+			// Copy script
 			copyBtn.addEventListener('click', async () => {
 				await navigator.clipboard.writeText(podcastScript);
-				const original = copyBtn.textContent;
 				copyBtn.textContent = 'Copied!';
-				setTimeout(() => { copyBtn.textContent = original; }, 2000);
+				setTimeout(() => { copyBtn.textContent = 'Copy Script'; }, 2000);
 			});
 
-			// ---- Publish to feed ----
-			publishBtn.addEventListener('click', async () => {
-				if (!audioBlob || !podcastTitle) {
-					showError('Generate a podcast first.');
-					return;
-				}
-
-				publishBtn.textContent = 'Publishing...';
-				publishBtn.setAttribute('disabled', 'true');
-
-				try {
-					const formData = new FormData();
-					formData.append('audio', audioBlob, 'episode.mp3');
-					formData.append('title', podcastTitle);
-					formData.append('description', podcastMeta);
-					formData.append('categories', Array.from(document.querySelectorAll<HTMLInputElement>('input[name="category"]:checked')).map(el => el.value).join(','));
-
-					const res = await fetch('/api/episode', {
-						method: 'POST',
-						body: formData,
-					});
-
-					const data = await res.json();
-					if (!res.ok || data.error) {
-						showError(data.error || 'Failed to publish episode.');
-						publishBtn.textContent = 'Publish to Podcast Feed';
-						publishBtn.removeAttribute('disabled');
-						return;
-					}
-
-					publishBtn.textContent = 'Published!';
-					publishBtn.classList.add('published');
-
-					const feedUrl = `${window.location.origin}/api/feed.xml`;
-					feedUrlEl.textContent = feedUrl;
-					feedInfo.classList.remove('hidden');
-
-				} catch {
-					showError('Failed to publish. Check your connection.');
-					publishBtn.textContent = 'Publish to Podcast Feed';
-					publishBtn.removeAttribute('disabled');
-				}
-			});
-
-			// ---- Helpers ----
-			function showError(msg: string) {
-				errorEl.textContent = msg;
-				errorEl.classList.remove('hidden');
-			}
-			function hideError() {
-				errorEl.classList.add('hidden');
-			}
+			function showError(msg: string) { errorEl.textContent = msg; errorEl.classList.remove('hidden'); }
+			function hideError() { errorEl.classList.add('hidden'); }
+			function showSuccess(msg: string) { successEl.textContent = msg; successEl.classList.remove('hidden'); }
+			function hideSuccess() { successEl.classList.add('hidden'); }
 		</script>
 	</body>
 </html>
