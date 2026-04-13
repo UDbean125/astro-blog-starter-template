@@ -6,7 +6,7 @@ import node from "@astrojs/node";
 
 // https://astro.build/config
 export default defineConfig({
-	site: "https://podcast.henbusinesssolutions.com",
+	site: "https://podcast.hhsolutions.cloud",
 	output: "server",
 	server: {
 		host: "0.0.0.0",
