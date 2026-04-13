@@ -203,6 +203,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     // STEP 2: Generate script with Claude
     console.log('Step 2: Generating script...');
+    const episodeNumber = getNextEpisodeNumber();
     const grouped: Record<string, NewsItem[]> = {};
     for (const item of uniqueItems) {
       if (!grouped[item.category]) grouped[item.category] = [];
@@ -262,7 +263,6 @@ ${newsText}`;
     const script = claudeData.content?.[0]?.text || 'Failed to generate script.';
     const wordCount = script.split(/\s+/).length;
     const estimatedMinutes = Math.round(wordCount / 150);
-    const episodeNumber = getNextEpisodeNumber();
     const title = `Ep. ${episodeNumber} — Bryan's Daily Podcast — ${today}`;
     console.log(`  Script: ${wordCount} words, ~${estimatedMinutes} min`);
 
