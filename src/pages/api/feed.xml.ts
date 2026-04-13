@@ -60,11 +60,11 @@ export const GET: APIRoute = async ({ request }) => {
   xmlns:itunes="http://www.itunes.apple.com/dtds/podcast-1.0.dtd"
   xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
-    <title>The Daily Digest</title>
+    <title>Bryan's Daily Podcast</title>
     <link>${baseUrl}/podcast</link>
     <language>en-us</language>
     <description>Your personalized daily news briefing covering AI, Apple, Autodesk, and sports.</description>
-    <itunes:author>The Daily Digest</itunes:author>
+    <itunes:author>Bryan Hennigan</itunes:author>
     <itunes:summary>A personalized 10-minute news podcast generated on demand, covering AI and Claude Code, Apple, Graitec and Autodesk, Detroit sports, and college sports.</itunes:summary>
     <itunes:category text="News">
       <itunes:category text="Daily News"/>

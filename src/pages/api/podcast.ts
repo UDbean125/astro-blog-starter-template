@@ -198,7 +198,7 @@ export const POST: APIRoute = async ({ request }) => {
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
     });
 
-    const prompt = `You are the host of "The Daily Digest," a personalized 10-minute news briefing podcast. Generate a podcast script of approximately 1,500 words based on the news stories below.
+    const prompt = `You are the host of "Bryan's Daily Podcast," a personalized 10-minute news briefing podcast. Generate a podcast script of approximately 1,500 words based on the news stories below.
 
 Today's date: ${today}
 
@@ -261,7 +261,7 @@ ${newsText}`;
 
     return new Response(JSON.stringify({
       script,
-      title: `The Daily Digest — ${today}`,
+      title: `Bryan's Daily Podcast — ${today}`,
       categories: selectedLabels,
       generatedAt: new Date().toISOString(),
       storiesCount: uniqueItems.length,
