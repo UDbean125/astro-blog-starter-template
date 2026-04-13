@@ -93,6 +93,16 @@ import Footer from '../components/Footer.astro';
 			}
 			.action-btn:hover { border-color: var(--accent); color: var(--accent); }
 
+			.voice-row { display: flex; gap: 0.75rem; align-items: center; }
+			.voice-row select { flex: 1; }
+			.preview-btn {
+				padding: 0.6rem 1rem; font-size: 0.9rem; font-family: 'Atkinson', sans-serif;
+				background: white; border: 2px solid rgb(var(--gray-light)); border-radius: 8px;
+				cursor: pointer; transition: all 0.15s; white-space: nowrap;
+			}
+			.preview-btn:hover { border-color: var(--accent); color: var(--accent); }
+			.preview-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
 			.hidden { display: none !important; }
 
 			@media (max-width: 720px) {
@@ -121,7 +131,11 @@ import Footer from '../components/Footer.astro';
 
 			<section class="voice-picker">
 				<h3>Choose a voice</h3>
-				<select id="voice"><option value="en-US-AndrewNeural">Andrew (Male, US)</option></select>
+				<div class="voice-row">
+					<select id="voice"><option value="en-US-AndrewNeural">Andrew (Male, US)</option></select>
+					<button id="preview-btn" class="preview-btn">Preview Voice</button>
+				</div>
+				<audio id="preview-audio" style="width:100%; margin-top:0.75rem; display:none;" controls></audio>
 			</section>
 
 			<button id="generate-btn" class="generate-btn">Generate My Podcast</button>
@@ -178,6 +192,32 @@ import Footer from '../components/Footer.astro';
 
 			let podcastScript = '';
 			let audioFilename = '';
+			const previewBtn = document.getElementById('preview-btn') as HTMLButtonElement;
+			const previewAudio = document.getElementById('preview-audio') as HTMLAudioElement;
+
+			// Voice preview
+			previewBtn.addEventListener('click', async () => {
+				previewBtn.disabled = true;
+				previewBtn.textContent = 'Loading...';
+				previewAudio.style.display = 'none';
+				try {
+					const res = await fetch('/api/preview-voice', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ voice: voiceSelect.value }),
+					});
+					if (!res.ok) throw new Error();
+					const blob = await res.blob();
+					previewAudio.src = URL.createObjectURL(blob);
+					previewAudio.style.display = 'block';
+					previewAudio.play();
+				} catch {
+					showError('Voice preview failed. Try again.');
+				} finally {
+					previewBtn.disabled = false;
+					previewBtn.textContent = 'Preview Voice';
+				}
+			});
 
 			// Load voices
 			fetch('/api/podcast').then(r => r.json()).then(voices => {

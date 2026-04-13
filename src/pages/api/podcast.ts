@@ -238,6 +238,8 @@ STRUCTURE & TIMING:
 
 STYLE GUIDELINES:
 - Write ONLY spoken words — no stage directions, sound cues, brackets, or formatting marks
+- Do NOT use any markdown formatting — no hashtags (#), no asterisks (*), no dashes (---), no bold, no headers
+- Write plain text paragraphs only, separated by blank lines
 - Use short paragraphs (2-3 sentences) separated by blank lines for natural speech pacing
 - Conversational but knowledgeable tone — like a well-informed friend catching you up
 - Smooth transitions between segments
@@ -279,6 +281,16 @@ ${newsText}`;
       await tts.setMetadata(voice, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
 
       const sanitized = script
+        // Strip markdown formatting that TTS reads aloud
+        .replace(/^#{1,6}\s*/gm, '')       // ## headings
+        .replace(/\*{1,3}([^*]+)\*{1,3}/g, '$1') // **bold**, *italic*
+        .replace(/^[-*_]{3,}\s*$/gm, '')   // --- horizontal rules
+        .replace(/^[-*]\s+/gm, '')         // - bullet points
+        .replace(/^\d+\.\s+/gm, '')        // 1. numbered lists
+        .replace(/`([^`]+)`/g, '$1')       // `code`
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // [links](url)
+        .replace(/[#*_~`>]/g, '')          // remaining markdown chars
+        // XML-escape for SSML
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
 

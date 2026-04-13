@@ -61,7 +61,7 @@ export const GET: APIRoute = async ({ request }) => {
   xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>Bryan's Daily Podcast</title>
-    <link>${baseUrl}/podcast</link>
+    <link>https://henbusinesssolutions.com</link>
     <language>en-us</language>
     <description>Your personalized daily news briefing covering AI, Apple, Autodesk, and sports.</description>
     <itunes:author>Bryan Hennigan</itunes:author>
