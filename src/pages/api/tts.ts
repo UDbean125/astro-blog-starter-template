@@ -1,5 +1,8 @@
 import type { APIRoute } from 'astro';
 import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts';
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
 
 const VOICES: Record<string, { name: string; locale: string }> = {
   'en-US-AndrewNeural': { name: 'Andrew (Male, US)', locale: 'en-US' },
@@ -24,8 +27,10 @@ export const GET: APIRoute = async () => {
 };
 
 export const POST: APIRoute = async ({ request }) => {
+  const tmpDir = os.tmpdir();
+
   try {
-    const { text, voice = 'en-US-AndrewNeural', rate = '1.0' } = await request.json();
+    const { text, voice = 'en-US-AndrewNeural' } = await request.json();
 
     if (!text || typeof text !== 'string') {
       return new Response(JSON.stringify({ error: 'No text provided.' }), {
@@ -41,10 +46,12 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
+    console.log(`TTS: Starting generation with voice ${voice}, text length: ${text.length} chars`);
+
     const tts = new MsEdgeTTS();
     await tts.setMetadata(voice, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
 
-    // Sanitize text for XML (SSML)
+    // Sanitize text for SSML - remove special chars that break XML
     const sanitized = text
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
@@ -52,18 +59,20 @@ export const POST: APIRoute = async ({ request }) => {
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&apos;');
 
-    const { audioStream } = tts.toStream(sanitized, { rate: rate.toString() });
+    // Use toFile for reliability with long texts
+    const outDir = path.join(tmpDir, 'podcast-tts');
+    fs.mkdirSync(outDir, { recursive: true });
 
-    // Collect all audio chunks into a buffer
-    const chunks: Buffer[] = [];
-    await new Promise<void>((resolve, reject) => {
-      audioStream.on('data', (chunk: Buffer) => chunks.push(chunk));
-      audioStream.on('end', resolve);
-      audioStream.on('close', resolve);
-      audioStream.on('error', reject);
-    });
+    console.log('TTS: Calling toFile...');
+    const { audioFilePath } = await tts.toFile(outDir, sanitized);
+    console.log(`TTS: File generated at ${audioFilePath}`);
 
-    const audioBuffer = Buffer.concat(chunks);
+    const audioBuffer = fs.readFileSync(audioFilePath);
+
+    // Clean up temp file
+    try { fs.unlinkSync(audioFilePath); } catch {}
+
+    console.log(`TTS: Success! Audio size: ${audioBuffer.length} bytes`);
 
     return new Response(audioBuffer, {
       headers: {
@@ -73,7 +82,8 @@ export const POST: APIRoute = async ({ request }) => {
     });
 
   } catch (error: any) {
-    console.error('TTS error:', error);
+    console.error('TTS error:', error?.message || error);
+    console.error('TTS stack:', error?.stack);
     return new Response(JSON.stringify({ error: `TTS failed: ${error?.message || 'Unknown error'}` }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
