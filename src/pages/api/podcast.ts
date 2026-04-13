@@ -136,6 +136,11 @@ function readEpisodes(): Episode[] {
   try { return JSON.parse(fs.readFileSync(EPISODES_JSON, 'utf-8')); } catch { return []; }
 }
 
+function getNextEpisodeNumber(): number {
+  const episodes = readEpisodes();
+  return episodes.length + 1;
+}
+
 function saveEpisode(episode: Episode) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
   const episodes = readEpisodes();
@@ -216,7 +221,7 @@ export const POST: APIRoute = async ({ request }) => {
 Today's date: ${today}
 
 STRUCTURE & TIMING:
-1. OPENING (~30 seconds): Warm greeting, date, and quick preview of what's coming up.
+1. OPENING (~30 seconds): Warm greeting — "Welcome to episode ${episodeNumber} of Bryan's Daily Podcast" — mention the date, and give a quick preview of what's coming up.
 2. AI & TECHNOLOGY (~4 minutes): Lead with the biggest AI stories. Cover developments around Claude Code, Cowork, OpenClaw, and other major AI news. Explain capabilities and what they mean for users.
 3. APPLE (~2 minutes): Apple product updates, OS releases, hardware, and ecosystem news.
 4. GRAITEC & AUTODESK (~1 minute): Industry solutions, Revit/BIM updates, and AEC technology news.
@@ -257,7 +262,8 @@ ${newsText}`;
     const script = claudeData.content?.[0]?.text || 'Failed to generate script.';
     const wordCount = script.split(/\s+/).length;
     const estimatedMinutes = Math.round(wordCount / 150);
-    const title = `Bryan's Daily Podcast — ${today}`;
+    const episodeNumber = getNextEpisodeNumber();
+    const title = `Ep. ${episodeNumber} — Bryan's Daily Podcast — ${today}`;
     console.log(`  Script: ${wordCount} words, ~${estimatedMinutes} min`);
 
     // STEP 3: Generate audio with Edge TTS
