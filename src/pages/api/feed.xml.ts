@@ -40,8 +40,12 @@ function formatDuration(seconds: number): string {
 }
 
 export const GET: APIRoute = async ({ request }) => {
-  const url = new URL(request.url);
-  const baseUrl = `${url.protocol}//${url.host}`;
+  // Use public URL, not the internal proxy URL
+  const forwardedHost = request.headers.get('x-forwarded-host') || request.headers.get('host');
+  const forwardedProto = request.headers.get('x-forwarded-proto') || 'https';
+  const baseUrl = forwardedHost
+    ? `${forwardedProto}://${forwardedHost}`
+    : 'https://podcast.hhsolutions.cloud';
   const episodes = readEpisodes();
 
   const items = episodes.map(ep => `
