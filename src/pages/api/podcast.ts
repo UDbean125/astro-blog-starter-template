@@ -70,6 +70,7 @@ const RSS_FEEDS: Record<string, { label: string; feeds: FeedConfig[] }> = {
 };
 
 const VOICES: Record<string, string> = {
+  'elevenlabs-bryan': 'Bryan (My Voice)',
   'en-US-AndrewNeural': 'Andrew (Male, US)',
   'en-US-BrianNeural': 'Brian (Male, US)',
   'en-US-ChristopherNeural': 'Christopher (Male, US)',
@@ -83,6 +84,9 @@ const VOICES: Record<string, string> = {
   'en-AU-WilliamNeural': 'William (Male, AU)',
   'en-AU-NatashaNeural': 'Natasha (Female, AU)',
 };
+
+const ELEVENLABS_VOICE_ID = 'T8Kic09vy1V4X00KPL5g';
+const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY || '72d930801534f514bc37f363ac2f95c3719438b6c5c49c1354af42e2306ff087';
 
 // --- Helpers ---
 
@@ -268,33 +272,65 @@ ${newsText}`;
     const title = `Ep. ${episodeNumber} — Bryan's Daily Podcast — ${today}`;
     console.log(`  Script: ${wordCount} words, ~${estimatedMinutes} min`);
 
-    // STEP 3: Generate audio with Edge TTS
+    // STEP 3: Generate audio
     console.log(`Step 3: Generating audio with voice ${voice}...`);
     let audioFilename = '';
     let audioFileSize = 0;
     let audioDuration = 0;
     let audioError = '';
 
+    // Strip markdown formatting that TTS reads aloud
+    const cleanScript = script
+      .replace(/^#{1,6}\s*/gm, '')
+      .replace(/\*{1,3}([^*]+)\*{1,3}/g, '$1')
+      .replace(/^[-*_]{3,}\s*$/gm, '')
+      .replace(/^[-*]\s+/gm, '')
+      .replace(/^\d+\.\s+/gm, '')
+      .replace(/`([^`]+)`/g, '$1')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .replace(/[#*_~`>]/g, '');
+
     try {
       fs.mkdirSync(EPISODES_DIR, { recursive: true });
-      const tts = new MsEdgeTTS();
-      await tts.setMetadata(voice, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
+      let audioFilePath: string;
 
-      const sanitized = script
-        // Strip markdown formatting that TTS reads aloud
-        .replace(/^#{1,6}\s*/gm, '')       // ## headings
-        .replace(/\*{1,3}([^*]+)\*{1,3}/g, '$1') // **bold**, *italic*
-        .replace(/^[-*_]{3,}\s*$/gm, '')   // --- horizontal rules
-        .replace(/^[-*]\s+/gm, '')         // - bullet points
-        .replace(/^\d+\.\s+/gm, '')        // 1. numbered lists
-        .replace(/`([^`]+)`/g, '$1')       // `code`
-        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // [links](url)
-        .replace(/[#*_~`>]/g, '')          // remaining markdown chars
-        // XML-escape for SSML
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+      if (voice === 'elevenlabs-bryan') {
+        // Use ElevenLabs API for Bryan's cloned voice
+        console.log('  Using ElevenLabs cloned voice...');
+        const elResponse = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}`, {
+          method: 'POST',
+          headers: {
+            'xi-api-key': ELEVENLABS_API_KEY,
+            'Content-Type': 'application/json',
+            'Accept': 'audio/mpeg',
+          },
+          body: JSON.stringify({
+            text: cleanScript,
+            model_id: 'eleven_multilingual_v2',
+            voice_settings: { stability: 0.5, similarity_boost: 0.75 },
+          }),
+        });
 
-      const { audioFilePath } = await tts.toFile(EPISODES_DIR, sanitized);
+        if (!elResponse.ok) {
+          const errText = await elResponse.text();
+          console.error('ElevenLabs error:', elResponse.status, errText);
+          throw new Error(`ElevenLabs API error (${elResponse.status})`);
+        }
+
+        const audioBuffer = Buffer.from(await elResponse.arrayBuffer());
+        audioFilePath = path.join(EPISODES_DIR, `elevenlabs-${Date.now()}.mp3`);
+        fs.writeFileSync(audioFilePath, audioBuffer);
+      } else {
+        // Use Edge TTS for other voices
+        const tts = new MsEdgeTTS();
+        await tts.setMetadata(voice, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
+        const sanitized = cleanScript
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+        const result = await tts.toFile(EPISODES_DIR, sanitized);
+        audioFilePath = result.audioFilePath;
+      }
+
       const stats = fs.statSync(audioFilePath);
 
       // Rename to a unique filename
