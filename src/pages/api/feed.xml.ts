@@ -6,6 +6,7 @@ interface Episode {
   id: string;
   title: string;
   description: string;
+  script?: string;
   filename: string;
   fileSize: number;
   pubDate: string;
@@ -48,16 +49,22 @@ export const GET: APIRoute = async ({ request }) => {
     : 'https://podcast.hhsolutions.cloud';
   const episodes = readEpisodes();
 
-  const items = episodes.map(ep => `
+  const items = episodes.map(ep => {
+    const showNotes = ep.script
+      ? `${escapeXml(ep.description)}\n\n--- FULL TRANSCRIPT ---\n\n${escapeXml(ep.script)}`
+      : escapeXml(ep.description);
+    return `
     <item>
       <title>${escapeXml(ep.title)}</title>
-      <description>${escapeXml(ep.description)}</description>
+      <description>${showNotes}</description>
+      <content:encoded><![CDATA[<p>${ep.description}</p>${ep.script ? `<hr><h3>Full Transcript</h3><p>${ep.script.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>')}</p>` : ''}]]></content:encoded>
       <enclosure url="${baseUrl}/api/episodes/${ep.filename}" length="${ep.fileSize}" type="audio/mpeg"/>
       <pubDate>${ep.pubDate}</pubDate>
       <itunes:duration>${formatDuration(ep.duration)}</itunes:duration>
       <itunes:explicit>false</itunes:explicit>
+      <itunes:summary>${escapeXml(ep.description)}</itunes:summary>
       <guid isPermaLink="false">${ep.id}</guid>
-    </item>`).join('\n');
+    </item>`}).join('\n');
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0"

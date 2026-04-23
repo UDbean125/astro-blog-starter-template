@@ -19,6 +19,7 @@ interface Episode {
   id: string;
   title: string;
   description: string;
+  script: string;
   filename: string;
   fileSize: number;
   pubDate: string;
@@ -374,6 +375,7 @@ ${newsText}`;
         id,
         title,
         description: `${uniqueItems.length} stories · ${selectedLabels.join(', ')} · ~${estimatedMinutes} min`,
+        script,
         filename: audioFilename,
         fileSize: audioFileSize,
         pubDate: new Date().toUTCString(),
