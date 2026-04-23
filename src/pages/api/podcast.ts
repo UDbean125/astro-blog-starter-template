@@ -340,7 +340,9 @@ ${newsText}`;
       fs.renameSync(audioFilePath, newPath);
 
       audioFileSize = stats.size;
-      audioDuration = Math.round(stats.size / 6000); // 48kbps estimate
+      // ElevenLabs outputs 128kbps (16000 bytes/sec), Edge TTS outputs 48kbps (6000 bytes/sec)
+      const bytesPerSecond = voice === 'elevenlabs-bryan' ? 16000 : 6000;
+      audioDuration = Math.round(stats.size / bytesPerSecond);
       console.log(`  Audio saved: ${audioFilename} (${audioFileSize} bytes, ~${audioDuration}s)`);
 
       // STEP 4: Auto-publish to feed
