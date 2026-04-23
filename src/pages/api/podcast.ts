@@ -296,30 +296,53 @@ ${newsText}`;
 
       if (voice === 'elevenlabs-bryan') {
         // Use ElevenLabs API for Bryan's cloned voice
+        // Split into chunks to maintain consistent audio quality
         console.log('  Using ElevenLabs cloned voice...');
-        const elResponse = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}`, {
-          method: 'POST',
-          headers: {
-            'xi-api-key': ELEVENLABS_API_KEY,
-            'Content-Type': 'application/json',
-            'Accept': 'audio/mpeg',
-          },
-          body: JSON.stringify({
-            text: cleanScript,
-            model_id: 'eleven_multilingual_v2',
-            voice_settings: { stability: 0.5, similarity_boost: 0.75 },
-          }),
-        });
+        const paragraphs = cleanScript.split('\n\n').filter(p => p.trim());
+        const chunks: string[] = [];
+        let current = '';
+        for (const para of paragraphs) {
+          if ((current + '\n\n' + para).length > 2500 && current) {
+            chunks.push(current.trim());
+            current = para;
+          } else {
+            current = current ? current + '\n\n' + para : para;
+          }
+        }
+        if (current.trim()) chunks.push(current.trim());
 
-        if (!elResponse.ok) {
-          const errText = await elResponse.text();
-          console.error('ElevenLabs error:', elResponse.status, errText);
-          throw new Error(`ElevenLabs API error (${elResponse.status})`);
+        console.log(`  Splitting into ${chunks.length} chunks for consistent quality...`);
+        const audioChunks: Buffer[] = [];
+
+        for (let i = 0; i < chunks.length; i++) {
+          console.log(`  Generating chunk ${i + 1}/${chunks.length} (${chunks[i].length} chars)...`);
+          const elResponse = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}`, {
+            method: 'POST',
+            headers: {
+              'xi-api-key': ELEVENLABS_API_KEY,
+              'Content-Type': 'application/json',
+              'Accept': 'audio/mpeg',
+            },
+            body: JSON.stringify({
+              text: chunks[i],
+              model_id: 'eleven_multilingual_v2',
+              voice_settings: { stability: 0.5, similarity_boost: 0.75 },
+            }),
+          });
+
+          if (!elResponse.ok) {
+            const errText = await elResponse.text();
+            console.error(`ElevenLabs error on chunk ${i + 1}:`, elResponse.status, errText);
+            throw new Error(`ElevenLabs API error (${elResponse.status}) on chunk ${i + 1}`);
+          }
+
+          audioChunks.push(Buffer.from(await elResponse.arrayBuffer()));
         }
 
-        const audioBuffer = Buffer.from(await elResponse.arrayBuffer());
+        const combined = Buffer.concat(audioChunks);
         audioFilePath = path.join(EPISODES_DIR, `elevenlabs-${Date.now()}.mp3`);
-        fs.writeFileSync(audioFilePath, audioBuffer);
+        fs.writeFileSync(audioFilePath, combined);
+        console.log(`  Combined ${chunks.length} chunks into ${combined.length} bytes`);
       } else {
         // Use Edge TTS for other voices
         const tts = new MsEdgeTTS();
