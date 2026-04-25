@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Bryan's Notes needs microphone access to record your meetings for transcription and AI-powered note generation.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Bryan's Notes uses speech recognition to transcribe your recorded meetings into text for analysis.</string>
+	<key>CFBundleName</key>
+	<string>Bryan's Notes</string>
+	<key>CFBundleDisplayName</key>
+	<string>Bryan's Notes</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.hensolutions.bryans-notes</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0.0</string>
+	<key>UILaunchScreen</key>
+	<dict/>
+</dict>
+</plist>
