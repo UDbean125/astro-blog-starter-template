@@ -143,30 +143,47 @@ struct RecordingView: View {
         )
         meeting.audioFileName = fileName
 
+        // Persist the meeting up front so the audio file is never lost if
+        // transcription or analysis later fails. We update the same record
+        // in place as transcript/analysis become available.
+        meetingStore.add(meeting)
+        meetingTitle = ""
+
         Task {
-            // Step 1: Transcribe
+            var transcriptionError: Error?
+            var analysisError: Error?
+
             do {
                 let transcript = try await transcriber.transcribe(audioURL: result.url)
                 meeting.transcript = transcript
+                meetingStore.update(meeting)
 
-                // Step 2: Analyze with AI (non-blocking — save even if this fails)
                 do {
                     let analysis = try await analyzer.analyze(
                         transcript: transcript,
                         meetingTitle: meeting.displayTitle
                     )
                     meeting.analysis = analysis
+                    meetingStore.update(meeting)
                 } catch {
-                    print("Analysis failed: \(error)")
+                    analysisError = error
                 }
             } catch {
-                print("Transcription failed: \(error)")
+                transcriptionError = error
             }
 
-            meetingStore.add(meeting)
             currentMeeting = meeting
-            meetingTitle = ""
-            navigateToDetail = true
+
+            if let transcriptionError {
+                errorMessage = "Couldn't transcribe \"\(meeting.displayTitle)\": \(transcriptionError.localizedDescription) The audio is saved in Meetings — you can retry transcription from there."
+                showError = true
+            } else if let analysisError {
+                errorMessage = "Transcription succeeded but AI analysis failed: \(analysisError.localizedDescription)"
+                showError = true
+                navigateToDetail = true
+            } else {
+                navigateToDetail = true
+            }
         }
     }
 

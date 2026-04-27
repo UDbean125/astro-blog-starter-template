@@ -36,8 +36,16 @@ class TranscriptionService: ObservableObject {
         }
 
         let request = SFSpeechURLRecognitionRequest(url: audioURL)
-        request.shouldReportPartialResults = false
+        request.shouldReportPartialResults = true
         request.addsPunctuation = true
+
+        // Cloud-based SFSpeechURLRecognitionRequest silently stalls on
+        // recordings longer than ~1 minute. Force on-device recognition when
+        // the recognizer supports it (English on iOS 13+ / macOS 10.15+ does)
+        // so meeting-length audio actually transcribes.
+        if recognizer.supportsOnDeviceRecognition {
+            request.requiresOnDeviceRecognition = true
+        }
 
         // Get audio duration for progress tracking
         let asset = AVURLAsset(url: audioURL)
