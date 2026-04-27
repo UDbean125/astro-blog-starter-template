@@ -1,4 +1,6 @@
 import SwiftUI
+import AVFoundation
+import UniformTypeIdentifiers
 
 struct RecordingView: View {
     @EnvironmentObject var meetingStore: MeetingStore
@@ -11,6 +13,7 @@ struct RecordingView: View {
     @State private var errorMessage: String?
     @State private var showError = false
     @State private var navigateToDetail = false
+    @State private var showImporter = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -96,7 +99,17 @@ struct RecordingView: View {
                 }
             }
             .disabled(transcriber.isTranscribing || analyzer.isAnalyzing)
-            .padding(.bottom, 40)
+            .padding(.bottom, 12)
+
+            // Import existing audio
+            Button {
+                showImporter = true
+            } label: {
+                Label("Import existing audio", systemImage: "square.and.arrow.down")
+                    .font(.subheadline)
+            }
+            .disabled(recorder.isRecording || transcriber.isTranscribing || analyzer.isAnalyzing)
+            .padding(.bottom, 28)
         }
         .navigationTitle("Record")
         .navigationDestination(isPresented: $navigateToDetail) {
@@ -109,6 +122,13 @@ struct RecordingView: View {
             Button("OK") {}
         } message: {
             Text(errorMessage ?? "An unknown error occurred.")
+        }
+        .fileImporter(
+            isPresented: $showImporter,
+            allowedContentTypes: [.audio, .mpeg4Audio, .mp3, .wav, .audiovisualContent],
+            allowsMultipleSelection: false
+        ) { result in
+            handleImport(result: result)
         }
     }
 
@@ -133,13 +153,57 @@ struct RecordingView: View {
 
     private func stopAndProcess() {
         guard let result = recorder.stopRecording() else { return }
+        process(audioURL: result.url, duration: result.duration, fileName: result.url.lastPathComponent)
+    }
 
-        let fileName = result.url.lastPathComponent
+    private func handleImport(result: Result<[URL], Error>) {
+        switch result {
+        case .success(let urls):
+            guard let pickedURL = urls.first else { return }
+            Task {
+                do {
+                    let copied = try copyImportedAudio(from: pickedURL)
+                    let duration = try await audioDuration(at: copied.url)
+                    process(audioURL: copied.url, duration: duration, fileName: copied.fileName)
+                } catch {
+                    errorMessage = "Couldn't import audio: \(error.localizedDescription)"
+                    showError = true
+                }
+            }
+        case .failure(let error):
+            errorMessage = error.localizedDescription
+            showError = true
+        }
+    }
 
+    /// Copy a user-picked audio file into the app's Recordings directory so it
+    /// outlives the security-scoped resource and lives next to native recordings.
+    private func copyImportedAudio(from sourceURL: URL) throws -> (url: URL, fileName: String) {
+        let needsScope = sourceURL.startAccessingSecurityScopedResource()
+        defer { if needsScope { sourceURL.stopAccessingSecurityScopedResource() } }
+
+        let recordingsDir = FileManager.default
+            .urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("Recordings", isDirectory: true)
+        try FileManager.default.createDirectory(at: recordingsDir, withIntermediateDirectories: true)
+
+        let ext = sourceURL.pathExtension.isEmpty ? "m4a" : sourceURL.pathExtension
+        let fileName = "imported_\(Date().timeIntervalSince1970).\(ext)"
+        let destination = recordingsDir.appendingPathComponent(fileName)
+        try FileManager.default.copyItem(at: sourceURL, to: destination)
+        return (destination, fileName)
+    }
+
+    private func audioDuration(at url: URL) async throws -> TimeInterval {
+        let asset = AVURLAsset(url: url)
+        return try await asset.load(.duration).seconds
+    }
+
+    private func process(audioURL: URL, duration: TimeInterval, fileName: String) {
         var meeting = Meeting(
             title: meetingTitle.isEmpty ? "" : meetingTitle,
             date: Date(),
-            duration: result.duration
+            duration: duration
         )
         meeting.audioFileName = fileName
 
@@ -154,7 +218,7 @@ struct RecordingView: View {
             var analysisError: Error?
 
             do {
-                let transcript = try await transcriber.transcribe(audioURL: result.url)
+                let transcript = try await transcriber.transcribe(audioURL: audioURL)
                 meeting.transcript = transcript
                 meetingStore.update(meeting)
 
