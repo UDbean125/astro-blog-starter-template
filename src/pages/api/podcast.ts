@@ -146,6 +146,12 @@ function getNextEpisodeNumber(): number {
   return episodes.length + 1;
 }
 
+function hasTodaysEpisode(): boolean {
+  const episodes = readEpisodes();
+  const today = new Date().toISOString().slice(0, 10);
+  return episodes.some(ep => ep.pubDate && new Date(ep.pubDate).toISOString().slice(0, 10) === today);
+}
+
 function saveEpisode(episode: Episode) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
   const episodes = readEpisodes();
@@ -169,6 +175,12 @@ export const POST: APIRoute = async ({ request }) => {
     const body = await request.json();
     const categories: string[] = body.categories || [];
     const voice: string = body.voice || 'en-US-AndrewNeural';
+    const force: boolean = body.force || false;
+
+    // Prevent duplicate episodes on the same day (cron safety)
+    if (!force && hasTodaysEpisode()) {
+      return new Response(JSON.stringify({ message: 'Episode already exists for today. Pass "force": true to override.' }), { status: 200, headers });
+    }
 
     if (categories.length === 0) {
       return new Response(JSON.stringify({ error: 'Please select at least one category.' }), { status: 400, headers });

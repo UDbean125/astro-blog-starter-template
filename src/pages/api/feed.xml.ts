@@ -69,17 +69,25 @@ export const GET: APIRoute = async ({ request }) => {
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0"
   xmlns:itunes="http://www.itunes.apple.com/dtds/podcast-1.0.dtd"
-  xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  xmlns:content="http://purl.org/rss/1.0/modules/content/"
+  xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Bryan's Daily Podcast</title>
     <link>https://henbusinesssolutions.com</link>
+    <atom:link href="https://podcast.hhsolutions.cloud/api/feed.xml" rel="self" type="application/rss+xml"/>
     <language>en-us</language>
     <description>Your personalized daily news briefing covering AI, Apple, Autodesk, and sports.</description>
     <itunes:author>Bryan Hennigan</itunes:author>
     <itunes:summary>A personalized 10-minute news podcast generated on demand, covering AI and Claude Code, Apple, Graitec and Autodesk, Detroit sports, and college sports.</itunes:summary>
+    <itunes:image href="https://podcast.hhsolutions.cloud/podcast-cover.png"/>
+    <itunes:owner>
+      <itunes:name>Bryan Hennigan</itunes:name>
+      <itunes:email>BryanHennigan@Hen-Solutions.com</itunes:email>
+    </itunes:owner>
     <itunes:category text="News">
       <itunes:category text="Daily News"/>
     </itunes:category>
+    <itunes:category text="Technology"/>
     <itunes:explicit>false</itunes:explicit>
     <itunes:type>episodic</itunes:type>
     ${items}
