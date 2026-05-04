@@ -1,14 +1,23 @@
 {
-	"name": "astro-blog-starter-template",
+	"name": "bryans-daily-podcast",
 	"compatibility_date": "2025-10-08",
 	"compatibility_flags": ["nodejs_compat"],
 	"main": "./dist/_worker.js/index.js",
 	"assets": {
 		"directory": "./dist",
-		"binding": "ASSETS"
+		"binding": "ASSETS",
+		"html_handling": "none",
+		"not_found_handling": "none"
 	},
+	"kv_namespaces": [
+		{
+			"binding": "EPISODES_KV",
+			"id": "5463415327164719b168f7dd0752de29"
+		}
+	],
 	"observability": {
 		"enabled": true
 	},
-	"upload_source_maps": true
+	"upload_source_maps": true,
+	"workers_dev": true
 }

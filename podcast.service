@@ -1,0 +1,16 @@
+[Unit]
+Description=Bryan's Daily Podcast Server
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/astro-blog-starter-template
+Environment=PORT=4321
+Environment=ANTHROPIC_API_KEY=your-api-key-here
+ExecStart=/usr/bin/node /root/astro-blog-starter-template/dist/server/entry.mjs
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

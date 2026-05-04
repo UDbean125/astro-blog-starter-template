@@ -1,0 +1,133 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+
+interface Episode {
+  id: string;
+  title: string;
+  description: string;
+  showNotes?: string;
+  filename: string;
+  fileSize: number;
+  pubDate: string;
+  duration: number;
+  categories: string[];
+}
+
+const runtime = (Astro.locals as any).runtime;
+const kv = runtime?.env?.EPISODES_KV;
+
+let episodes: Episode[] = [];
+if (kv) {
+  try {
+    episodes = (await kv.get('episodes', { type: 'json' })) || [];
+  } catch {}
+}
+
+function formatDuration(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+}
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead title="Episodes — Bryan's Daily Podcast" description="Browse all episodes of Bryan's Daily Podcast with show notes and key takeaways" />
+    <style>
+      .episodes-header { text-align: center; margin-bottom: 2rem; }
+      .episodes-header h1 { font-size: 2rem; margin-bottom: 0.25rem; }
+      .episodes-header p { color: rgb(var(--gray)); font-size: 1.05rem; }
+      .episode-count { font-size: 0.9rem; color: rgb(var(--gray)); margin-bottom: 1.5rem; }
+
+      .episode-list { display: flex; flex-direction: column; gap: 1rem; max-width: 720px; margin: 0 auto; }
+
+      .episode-card {
+        border: 1px solid rgb(var(--gray-light));
+        border-radius: 12px;
+        padding: 1.25rem 1.5rem;
+        transition: border-color 0.15s, box-shadow 0.15s;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+      }
+      .episode-card:hover {
+        border-color: var(--accent);
+        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      }
+
+      .episode-card .ep-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        margin: 0 0 0.35rem 0;
+        color: rgb(var(--black));
+      }
+      .episode-card .ep-meta {
+        font-size: 0.85rem;
+        color: rgb(var(--gray));
+        margin: 0 0 0.5rem 0;
+      }
+      .episode-card .ep-summary {
+        font-size: 0.95rem;
+        color: rgb(var(--gray-dark));
+        margin: 0;
+        line-height: 1.5;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .category-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        margin-top: 0.6rem;
+      }
+      .category-tag {
+        font-size: 0.75rem;
+        background: rgba(var(--gray-light), 0.7);
+        color: rgb(var(--gray-dark));
+        padding: 0.2rem 0.6rem;
+        border-radius: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <Header />
+    <main>
+      <section class="episodes-header">
+        <h1>All Episodes</h1>
+        <p>Browse every episode with show notes and key takeaways</p>
+      </section>
+
+      <p class="episode-count" style="text-align: center;">{episodes.length} episodes</p>
+
+      <div class="episode-list">
+        {episodes.map(ep => (
+          <a href={`/episodes/${ep.id}`} class="episode-card">
+            <h2 class="ep-title">{ep.title}</h2>
+            <p class="ep-meta">
+              {formatDate(ep.pubDate)} · {formatDuration(ep.duration)}
+            </p>
+            <p class="ep-summary">{ep.showNotes || ep.description}</p>
+            <div class="category-tags">
+              {ep.categories.map(cat => (
+                <span class="category-tag">{cat}</span>
+              ))}
+            </div>
+          </a>
+        ))}
+      </div>
+    </main>
+    <Footer />
+  </body>
+</html>

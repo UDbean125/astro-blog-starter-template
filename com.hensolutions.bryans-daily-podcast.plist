@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.hensolutions.bryans-daily-podcast</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>-c</string>
+        <!--
+            Trigger podcast generation via HTTP.
+            - max-time 30: abort after 30s (cron endpoint returns immediately now)
+            - retry 2 with 15s delay: handles transient Worker cold-start failures
+            - Logs timestamp + HTTP status for debugging
+            - Falls back to automated pipeline feed if Worker is unreachable
+        -->
+        <string>
+LOG="/Users/bryanhennigan/Desktop/Hen Solutions LLC/Podcasts/Hennigan's Huddle/cron.log"
+TS="$(date '+%Y-%m-%d %H:%M:%S')"
+
+# Try the Cloudflare Worker endpoint first
+RESULT=$(/usr/bin/curl -s -w "\nHTTP_CODE:%{http_code}\nTIME:%{time_total}s" \
+    --retry 2 --retry-delay 15 --retry-all-errors --max-time 30 \
+    "https://podcast.hhsolutions.cloud/api/cron" 2>&amp;1)
+
+HTTP_CODE=$(echo "$RESULT" | grep "HTTP_CODE:" | cut -d: -f2)
+ELAPSED=$(echo "$RESULT" | grep "TIME:" | cut -d: -f2)
+BODY=$(echo "$RESULT" | grep -v "HTTP_CODE:" | grep -v "TIME:")
+
+echo "[$TS] Worker: HTTP $HTTP_CODE in $ELAPSED — $BODY" >> "$LOG"
+
+# If Worker failed, log it clearly
+if [ "$HTTP_CODE" = "000" ] || [ "$HTTP_CODE" = "500" ] || [ -z "$HTTP_CODE" ]; then
+    echo "[$TS] Worker FAILED (HTTP $HTTP_CODE). The automated pipeline at matterdigest.pages.dev is the primary system." >> "$LOG"
+fi
+        </string>
+    </array>
+
+    <!-- Run daily at 7:15 AM ET (15 min after automated pipeline's 7 AM backup run) -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>7</integer>
+        <key>Minute</key>
+        <integer>15</integer>
+    </dict>
+
+    <!-- Logs -->
+    <key>StandardOutPath</key>
+    <string>/Users/bryanhennigan/Desktop/Hen Solutions LLC/Podcasts/Hennigan's Huddle/cron.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/bryanhennigan/Desktop/Hen Solutions LLC/Podcasts/Hennigan's Huddle/cron-error.log</string>
+
+    <!-- Environment for curl -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <key>HOME</key>
+        <string>/Users/bryanhennigan</string>
+    </dict>
+
+    <key>ProcessType</key>
+    <string>Standard</string>
+
+</dict>
+</plist>
