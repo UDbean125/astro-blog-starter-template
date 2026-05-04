@@ -1,8 +1,8 @@
 import type { APIRoute } from 'astro';
 import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts';
 
-const ELEVENLABS_VOICE_ID = 'T8Kic09vy1V4X00KPL5g';
-const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY || '72d930801534f514bc37f363ac2f95c3719438b6c5c49c1354af42e2306ff087';
+const ELEVENLABS_VOICE_ID = process.env.ELEVENLABS_VOICE_ID || 'T8Kic09vy1V4X00KPL5g';
+const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY || '';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -10,6 +10,9 @@ export const POST: APIRoute = async ({ request }) => {
     const sampleText = "Hey, welcome to Bryan's Daily Podcast. Here's a quick preview of what this voice sounds like for your daily news briefing.";
 
     if (voice === 'elevenlabs-bryan') {
+      if (!ELEVENLABS_API_KEY) {
+        return new Response(JSON.stringify({ error: 'ELEVENLABS_API_KEY not configured.' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+      }
       const elResponse = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}`, {
         method: 'POST',
         headers: {

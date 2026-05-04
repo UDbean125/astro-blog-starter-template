@@ -1,329 +1,731 @@
 ---
 import BaseHead from '../components/BaseHead.astro';
-import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+
+// Fetch recent episodes from KV for the episode list
+interface Episode {
+  id: string;
+  title: string;
+  description: string;
+  showNotes?: string;
+  script?: string;
+  filename: string;
+  fileSize: number;
+  pubDate: string;
+  duration: number;
+  categories: string[];
+}
+
+const runtime = (Astro.locals as any).runtime;
+const kv = runtime?.env?.EPISODES_KV;
+let episodes: Episode[] = [];
+if (kv) {
+  try {
+    episodes = (await kv.get('episodes', { type: 'json' })) || [];
+  } catch {}
+}
+const recentEpisodes = episodes.slice(0, 10);
+
+function formatDuration(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('en-US', {
+    weekday: 'short', month: 'short', day: 'numeric'
+  });
+}
+function formatDateLong(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+}
 ---
 
 <!doctype html>
 <html lang="en">
-	<head>
-		<BaseHead title="Bryan's Daily Podcast" description="Your personalized 10-minute news podcast covering AI, Apple, Autodesk, and your favorite sports teams" />
-		<style>
-			.podcast-header { text-align: center; margin-bottom: 2rem; }
-			.podcast-header h1 { font-size: 2.4rem; margin-bottom: 0.25rem; }
-			.podcast-header .subtitle { color: rgb(var(--gray)); font-size: 1.1rem; margin: 0; }
+  <head>
+    <BaseHead title="Bryan's Daily Podcast — AI, Tech, Sports & More" description="Your 10-minute daily news briefing covering AI, Apple, AEC tech, and Detroit sports. Powered by Hen Solutions LLC." />
+    <style is:inline>
+      /* ===== HEN SOLUTIONS BRAND SYSTEM ===== */
+      :root {
+        --hs-green: #0a3d2a;
+        --hs-green-light: #0d4f36;
+        --hs-green-dark: #072e1f;
+        --hs-gold: #c5a24d;
+        --hs-gold-light: #d4b76a;
+        --hs-gold-dark: #a8882e;
+        --hs-white: #fafaf8;
+        --hs-cream: #f5f0e8;
+        --hs-text: #1a1a1a;
+        --hs-text-light: #6b7280;
+        --hs-radius: 14px;
+        --hs-shadow: 0 4px 20px rgba(10, 61, 42, 0.12);
+        --hs-shadow-lg: 0 8px 40px rgba(10, 61, 42, 0.18);
+      }
 
-			.categories, .voice-picker {
-				background: rgba(var(--gray-light), 0.5);
-				border-radius: 12px;
-				padding: 1.5rem;
-				margin-bottom: 1.5rem;
-			}
-			.categories h3, .voice-picker h3 { margin: 0 0 1rem 0; font-size: 1.1rem; }
-			.category-grid {
-				display: grid;
-				grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-				gap: 0.75rem;
-			}
-			.category-grid label {
-				display: flex; align-items: center; gap: 0.5rem; cursor: pointer;
-				padding: 0.5rem 0.75rem; border-radius: 8px; background: white;
-				border: 2px solid rgb(var(--gray-light)); transition: all 0.15s ease;
-				font-size: 0.95rem; user-select: none;
-			}
-			.category-grid label:hover { border-color: var(--accent); }
-			.category-grid label:has(input:checked) { border-color: var(--accent); background: rgba(35, 55, 255, 0.05); }
-			.category-grid input[type="checkbox"] { accent-color: var(--accent); width: 18px; height: 18px; }
+      * { box-sizing: border-box; }
 
-			.voice-picker select {
-				width: 100%; padding: 0.6rem 0.75rem; font-size: 1rem;
-				font-family: 'Atkinson', sans-serif; border: 2px solid rgb(var(--gray-light));
-				border-radius: 8px; background: white; cursor: pointer;
-			}
+      body {
+        font-family: 'Atkinson', -apple-system, BlinkMacSystemFont, sans-serif;
+        margin: 0; padding: 0;
+        background: var(--hs-white);
+        color: var(--hs-text);
+        line-height: 1.6;
+      }
 
-			.generate-btn {
-				display: block; width: 100%; padding: 1rem; font-size: 1.15rem;
-				font-weight: 700; font-family: 'Atkinson', sans-serif; background: var(--accent);
-				color: white; border: none; border-radius: 10px; cursor: pointer; transition: all 0.15s ease;
-			}
-			.generate-btn:hover:not(:disabled) { background: var(--accent-dark); transform: translateY(-1px); }
-			.generate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+      /* ===== HEADER / NAV ===== */
+      .podcast-nav {
+        background: var(--hs-green);
+        padding: 0.75rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+      }
+      .podcast-nav .brand {
+        display: flex; align-items: center; gap: 0.75rem;
+        text-decoration: none; color: white;
+      }
+      .podcast-nav .brand-icon {
+        width: 36px; height: 36px;
+        background: var(--hs-gold);
+        border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 900; font-size: 1.2rem; color: var(--hs-green);
+      }
+      .podcast-nav .brand-text { font-size: 1rem; font-weight: 700; color: white; }
+      .podcast-nav .brand-sub { font-size: 0.7rem; color: var(--hs-gold-light); display: block; line-height: 1.1; }
+      .nav-links { display: flex; gap: 0.25rem; }
+      .nav-links a {
+        color: rgba(255,255,255,0.8); text-decoration: none;
+        padding: 0.5rem 0.75rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600;
+        transition: all 0.15s;
+      }
+      .nav-links a:hover, .nav-links a.active { background: rgba(255,255,255,0.12); color: white; }
 
-			.loading { text-align: center; padding: 3rem 1rem; }
-			.spinner {
-				width: 48px; height: 48px; border: 4px solid rgb(var(--gray-light));
-				border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite;
-				margin: 0 auto 1rem;
-			}
-			@keyframes spin { to { transform: rotate(360deg); } }
-			.loading p { margin: 0.25rem 0; color: rgb(var(--gray-dark)); }
-			.loading .sub { font-size: 0.9rem; color: rgb(var(--gray)); }
+      /* ===== HERO ===== */
+      .hero {
+        background: linear-gradient(135deg, var(--hs-green) 0%, var(--hs-green-light) 50%, var(--hs-green) 100%);
+        padding: 3.5rem 1.5rem 3rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+      .hero::before {
+        content: '';
+        position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        background: radial-gradient(circle at 30% 20%, rgba(197, 162, 77, 0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 70% 80%, rgba(197, 162, 77, 0.08) 0%, transparent 50%);
+      }
+      .hero-content { position: relative; z-index: 1; max-width: 680px; margin: 0 auto; }
+      .hero-badge {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        background: rgba(197, 162, 77, 0.15); border: 1px solid rgba(197, 162, 77, 0.3);
+        color: var(--hs-gold-light); font-size: 0.75rem; font-weight: 700;
+        padding: 0.35rem 0.9rem; border-radius: 50px; margin-bottom: 1.25rem;
+        text-transform: uppercase; letter-spacing: 0.05em;
+      }
+      .hero-badge .pulse {
+        width: 8px; height: 8px; background: #4ade80; border-radius: 50%;
+        animation: pulse 2s ease-in-out infinite;
+      }
+      @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+      .hero h1 { color: white; font-size: 2.6rem; margin: 0 0 0.5rem 0; line-height: 1.15; }
+      .hero h1 .gold { color: var(--hs-gold); }
+      .hero .subtitle { color: rgba(255,255,255,0.7); font-size: 1.1rem; margin: 0 0 2rem 0; max-width: 520px; margin-left: auto; margin-right: auto; }
 
-			.error-msg {
-				background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b;
-				padding: 1rem 1.25rem; border-radius: 8px; margin-bottom: 1rem;
-			}
-			.success-msg {
-				background: #f0fdf4; border: 1px solid #86efac; color: #166534;
-				padding: 1rem 1.25rem; border-radius: 8px; margin-bottom: 1rem;
-			}
+      /* Subscribe buttons */
+      .subscribe-row {
+        display: flex; gap: 0.6rem; justify-content: center; flex-wrap: wrap;
+      }
+      .sub-btn {
+        display: inline-flex; align-items: center; gap: 0.5rem;
+        padding: 0.65rem 1.25rem; border-radius: 50px; font-size: 0.85rem; font-weight: 700;
+        text-decoration: none; transition: all 0.2s; border: 2px solid transparent;
+        font-family: 'Atkinson', sans-serif;
+      }
+      .sub-btn.primary {
+        background: var(--hs-gold); color: var(--hs-green-dark);
+        box-shadow: 0 2px 12px rgba(197, 162, 77, 0.3);
+      }
+      .sub-btn.primary:hover { background: var(--hs-gold-light); transform: translateY(-2px); box-shadow: 0 4px 20px rgba(197, 162, 77, 0.4); }
+      .sub-btn.outline {
+        border-color: rgba(255,255,255,0.3); color: white; background: rgba(255,255,255,0.08);
+      }
+      .sub-btn.outline:hover { border-color: var(--hs-gold); color: var(--hs-gold); background: rgba(197, 162, 77, 0.1); }
+      .sub-btn svg { width: 18px; height: 18px; }
 
-			.player { margin-top: 2rem; }
-			.player h2 { font-size: 1.5rem; margin-bottom: 0.25rem; }
-			.player .meta { color: rgb(var(--gray)); font-size: 0.9rem; margin: 0 0 1.25rem 0; }
+      /* ===== MAIN CONTAINER ===== */
+      .page-container { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
 
-			.audio-container {
-				background: rgb(var(--black)); border-radius: 12px;
-				padding: 1.25rem; margin-bottom: 1.5rem;
-			}
-			.audio-container audio { width: 100%; height: 48px; border-radius: 8px; }
-			.audio-status { color: rgba(255,255,255,0.6); font-size: 0.85rem; text-align: center; margin-top: 0.5rem; }
+      /* ===== LATEST EPISODE CARD ===== */
+      .latest-section { margin-bottom: 2.5rem; }
+      .section-label {
+        font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em;
+        color: var(--hs-gold-dark); margin-bottom: 0.75rem;
+      }
+      .latest-card {
+        background: white; border-radius: var(--hs-radius); padding: 2rem;
+        box-shadow: var(--hs-shadow); border: 1px solid rgba(10, 61, 42, 0.08);
+      }
+      .latest-card .ep-date { color: var(--hs-text-light); font-size: 0.85rem; margin: 0 0 0.25rem 0; }
+      .latest-card .ep-title { font-size: 1.4rem; margin: 0 0 0.75rem 0; color: var(--hs-green); }
+      .latest-card .ep-desc { color: var(--hs-text-light); font-size: 0.95rem; margin: 0 0 1.25rem 0; }
 
-			.script-container {
-				max-height: 500px; overflow-y: auto; border: 1px solid rgb(var(--gray-light));
-				border-radius: 12px; padding: 1.5rem; background: white; scroll-behavior: smooth;
-			}
-			.script-text { line-height: 1.7; font-size: 1rem; white-space: pre-wrap; }
+      .audio-player-wrap {
+        background: var(--hs-green); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.25rem;
+      }
+      .audio-player-wrap audio { width: 100%; height: 44px; border-radius: 8px; }
 
-			.actions { display: flex; gap: 0.75rem; margin-top: 1rem; flex-wrap: wrap; }
-			.action-btn {
-				padding: 0.6rem 1.2rem; font-size: 0.9rem; font-family: 'Atkinson', sans-serif;
-				border: 2px solid rgb(var(--gray-light)); background: white; color: rgb(var(--gray-dark));
-				border-radius: 8px; cursor: pointer; transition: all 0.15s;
-			}
-			.action-btn:hover { border-color: var(--accent); color: var(--accent); }
+      .ep-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem; }
+      .ep-tag {
+        font-size: 0.72rem; font-weight: 700;
+        padding: 0.25rem 0.7rem; border-radius: 50px;
+        background: rgba(10, 61, 42, 0.06); color: var(--hs-green);
+      }
 
-			.voice-row { display: flex; gap: 0.75rem; align-items: center; }
-			.voice-row select { flex: 1; }
-			.preview-btn {
-				padding: 0.6rem 1rem; font-size: 0.9rem; font-family: 'Atkinson', sans-serif;
-				background: white; border: 2px solid rgb(var(--gray-light)); border-radius: 8px;
-				cursor: pointer; transition: all 0.15s; white-space: nowrap;
-			}
-			.preview-btn:hover { border-color: var(--accent); color: var(--accent); }
-			.preview-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+      .show-notes-toggle {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        background: none; border: 2px solid rgba(10, 61, 42, 0.12); border-radius: 10px;
+        padding: 0.5rem 1rem; font-size: 0.85rem; font-weight: 600;
+        color: var(--hs-green); cursor: pointer; font-family: 'Atkinson', sans-serif;
+        transition: all 0.15s;
+      }
+      .show-notes-toggle:hover { border-color: var(--hs-green); background: rgba(10, 61, 42, 0.03); }
+      .show-notes-content {
+        display: none; margin-top: 1rem; padding: 1.25rem; background: var(--hs-cream);
+        border-radius: 12px; font-size: 0.9rem; line-height: 1.7; white-space: pre-wrap;
+      }
+      .show-notes-content.open { display: block; }
 
-			.hidden { display: none !important; }
+      /* ===== GENERATE SECTION ===== */
+      .generate-section {
+        background: white; border-radius: var(--hs-radius); padding: 2rem;
+        box-shadow: var(--hs-shadow); border: 1px solid rgba(10, 61, 42, 0.08);
+        margin-bottom: 2.5rem;
+      }
+      .generate-section h2 {
+        font-size: 1.3rem; margin: 0 0 0.3rem 0; color: var(--hs-green);
+      }
+      .generate-section .gen-sub {
+        color: var(--hs-text-light); font-size: 0.9rem; margin: 0 0 1.5rem 0;
+      }
 
-			@media (max-width: 720px) {
-				.category-grid { grid-template-columns: 1fr; }
-			}
-		</style>
-	</head>
-	<body>
-		<Header />
-		<main>
-			<section class="podcast-header">
-				<h1>Bryan's Daily Podcast</h1>
-				<p class="subtitle">Your personalized 10-minute news podcast, generated on demand</p>
-			</section>
+      .topic-grid {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 0.6rem; margin-bottom: 1.5rem;
+      }
+      .topic-chip {
+        display: flex; align-items: center; gap: 0.5rem;
+        padding: 0.7rem 0.9rem; border-radius: 10px;
+        background: var(--hs-cream); border: 2px solid transparent;
+        cursor: pointer; transition: all 0.15s; user-select: none;
+        font-size: 0.88rem; font-weight: 600;
+      }
+      .topic-chip:hover { border-color: var(--hs-gold); }
+      .topic-chip.selected { border-color: var(--hs-green); background: rgba(10, 61, 42, 0.06); }
+      .topic-chip input { display: none; }
+      .topic-chip .chip-dot {
+        width: 10px; height: 10px; border-radius: 50%;
+        border: 2px solid var(--hs-text-light); transition: all 0.15s;
+      }
+      .topic-chip.selected .chip-dot {
+        background: var(--hs-green); border-color: var(--hs-green);
+        box-shadow: inset 0 0 0 2px white;
+      }
 
-			<section class="categories">
-				<h3>Select your topics</h3>
-				<div class="category-grid">
-					<label><input type="checkbox" name="category" value="ai" checked /> AI & Claude Code</label>
-					<label><input type="checkbox" name="category" value="apple" checked /> Apple</label>
-					<label><input type="checkbox" name="category" value="autodesk" checked /> Graitec & Autodesk</label>
-					<label><input type="checkbox" name="category" value="detroit_sports" checked /> Detroit Sports</label>
-					<label><input type="checkbox" name="category" value="college_sports" checked /> College Sports</label>
-				</div>
-			</section>
+      .voice-section {
+        display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1.5rem;
+      }
+      .voice-section label { font-size: 0.85rem; font-weight: 700; color: var(--hs-text-light); white-space: nowrap; }
+      .voice-section select {
+        flex: 1; padding: 0.6rem 0.9rem; font-size: 0.9rem; font-family: 'Atkinson', sans-serif;
+        border: 2px solid rgba(10, 61, 42, 0.12); border-radius: 10px;
+        background: white; cursor: pointer;
+      }
+      .preview-voice-btn {
+        padding: 0.6rem 1rem; font-size: 0.8rem; font-weight: 700;
+        font-family: 'Atkinson', sans-serif;
+        background: white; border: 2px solid rgba(10, 61, 42, 0.12); border-radius: 10px;
+        cursor: pointer; color: var(--hs-green); transition: all 0.15s; white-space: nowrap;
+      }
+      .preview-voice-btn:hover { border-color: var(--hs-green); }
 
-			<section class="voice-picker">
-				<h3>Choose a voice</h3>
-				<div class="voice-row">
-					<select id="voice"><option value="en-US-AndrewNeural">Andrew (Male, US)</option></select>
-					<button id="preview-btn" class="preview-btn">Preview Voice</button>
-				</div>
-				<audio id="preview-audio" style="width:100%; margin-top:0.75rem; display:none;" controls></audio>
-			</section>
+      .generate-btn {
+        display: block; width: 100%; padding: 1.1rem; font-size: 1.15rem;
+        font-weight: 800; font-family: 'Atkinson', sans-serif;
+        background: linear-gradient(135deg, var(--hs-green) 0%, var(--hs-green-light) 100%);
+        color: white; border: none; border-radius: 12px; cursor: pointer;
+        transition: all 0.2s; box-shadow: 0 4px 16px rgba(10, 61, 42, 0.25);
+        letter-spacing: 0.02em;
+      }
+      .generate-btn:hover:not(:disabled) {
+        transform: translateY(-2px); box-shadow: 0 6px 24px rgba(10, 61, 42, 0.35);
+      }
+      .generate-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-			<button id="generate-btn" class="generate-btn">Generate My Podcast</button>
+      /* Loading state */
+      .loading-state { text-align: center; padding: 2.5rem 1rem; display: none; }
+      .loading-state.visible { display: block; }
+      .loading-spinner {
+        width: 48px; height: 48px;
+        border: 4px solid rgba(10, 61, 42, 0.1);
+        border-top-color: var(--hs-green);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin: 0 auto 1rem;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .loading-state .step { font-weight: 700; color: var(--hs-green); margin: 0; }
+      .loading-state .sub { font-size: 0.85rem; color: var(--hs-text-light); margin: 0.25rem 0 0 0; }
 
-			<section id="loading" class="loading hidden">
-				<div class="spinner"></div>
-				<p id="loading-text">Starting...</p>
-				<p class="sub" id="loading-sub"></p>
-			</section>
+      /* Messages */
+      .msg-error {
+        background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b;
+        padding: 1rem 1.25rem; border-radius: 10px; margin-bottom: 1rem; display: none;
+      }
+      .msg-success {
+        background: #f0fdf4; border: 1px solid #86efac; color: #166534;
+        padding: 1rem 1.25rem; border-radius: 10px; margin-bottom: 1rem; display: none;
+      }
 
-			<div id="error" class="error-msg hidden"></div>
-			<div id="success" class="success-msg hidden"></div>
+      /* Generated result player */
+      .gen-result { display: none; margin-top: 1.5rem; }
+      .gen-result.visible { display: block; }
+      .gen-result h3 { font-size: 1.2rem; color: var(--hs-green); margin: 0 0 0.25rem 0; }
+      .gen-result .meta { color: var(--hs-text-light); font-size: 0.85rem; margin: 0 0 1rem 0; }
+      .gen-result .script-box {
+        max-height: 400px; overflow-y: auto;
+        border: 1px solid rgba(10, 61, 42, 0.1); border-radius: 12px;
+        padding: 1.5rem; background: var(--hs-cream); font-size: 0.92rem;
+        line-height: 1.7; white-space: pre-wrap; margin-bottom: 1rem;
+      }
+      .gen-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+      .gen-action-btn {
+        padding: 0.55rem 1.1rem; font-size: 0.82rem; font-weight: 700;
+        font-family: 'Atkinson', sans-serif;
+        border: 2px solid rgba(10, 61, 42, 0.12); background: white;
+        color: var(--hs-green); border-radius: 10px; cursor: pointer; transition: all 0.15s;
+      }
+      .gen-action-btn:hover { border-color: var(--hs-green); background: rgba(10, 61, 42, 0.03); }
 
-			<section id="player" class="player hidden">
-				<h2 id="podcast-title"></h2>
-				<p id="podcast-meta" class="meta"></p>
+      /* ===== EPISODE LIST ===== */
+      .episodes-section { margin-bottom: 2.5rem; }
+      .episodes-grid { display: flex; flex-direction: column; gap: 0.75rem; }
 
-				<div class="audio-container" id="audio-container">
-					<audio id="audio-player" controls preload="auto"></audio>
-					<div id="audio-status" class="audio-status"></div>
-				</div>
+      .ep-card {
+        display: flex; align-items: center; gap: 1rem;
+        background: white; border-radius: var(--hs-radius); padding: 1rem 1.25rem;
+        border: 1px solid rgba(10, 61, 42, 0.08);
+        text-decoration: none; color: inherit; transition: all 0.15s;
+      }
+      .ep-card:hover { box-shadow: var(--hs-shadow); border-color: var(--hs-gold); transform: translateY(-1px); }
 
-				<div class="script-container">
-					<div id="script" class="script-text"></div>
-				</div>
+      .ep-card .ep-num {
+        width: 44px; height: 44px; border-radius: 10px;
+        background: linear-gradient(135deg, var(--hs-green) 0%, var(--hs-green-light) 100%);
+        display: flex; align-items: center; justify-content: center;
+        color: var(--hs-gold); font-weight: 900; font-size: 0.8rem; flex-shrink: 0;
+      }
+      .ep-card .ep-info { flex: 1; min-width: 0; }
+      .ep-card .ep-info h3 {
+        font-size: 0.95rem; margin: 0 0 0.15rem 0; color: var(--hs-text);
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      }
+      .ep-card .ep-info .ep-meta {
+        font-size: 0.78rem; color: var(--hs-text-light); margin: 0;
+      }
+      .ep-card .ep-play {
+        width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+        background: var(--hs-cream); display: flex; align-items: center; justify-content: center;
+        transition: all 0.15s;
+      }
+      .ep-card:hover .ep-play { background: var(--hs-gold); }
+      .ep-card .ep-play svg { width: 14px; height: 14px; color: var(--hs-green); }
 
-				<div class="actions">
-					<button id="download-audio-btn" class="action-btn">Download Audio (MP3)</button>
-					<button id="download-btn" class="action-btn">Download Script</button>
-					<button id="copy-btn" class="action-btn">Copy Script</button>
-				</div>
-			</section>
-		</main>
-		<Footer />
+      .view-all-link {
+        display: block; text-align: center; margin-top: 1rem;
+        color: var(--hs-green); font-weight: 700; font-size: 0.9rem; text-decoration: none;
+      }
+      .view-all-link:hover { color: var(--hs-gold-dark); }
 
-		<script>
-			const generateBtn = document.getElementById('generate-btn') as HTMLButtonElement;
-			const loadingEl = document.getElementById('loading')!;
-			const loadingText = document.getElementById('loading-text')!;
-			const loadingSub = document.getElementById('loading-sub')!;
-			const errorEl = document.getElementById('error')!;
-			const successEl = document.getElementById('success')!;
-			const playerEl = document.getElementById('player')!;
-			const voiceSelect = document.getElementById('voice') as HTMLSelectElement;
-			const audioPlayer = document.getElementById('audio-player') as HTMLAudioElement;
-			const audioContainer = document.getElementById('audio-container')!;
-			const audioStatus = document.getElementById('audio-status')!;
-			const scriptEl = document.getElementById('script')!;
-			const titleEl = document.getElementById('podcast-title')!;
-			const metaEl = document.getElementById('podcast-meta')!;
-			const downloadBtn = document.getElementById('download-btn')!;
-			const downloadAudioBtn = document.getElementById('download-audio-btn')!;
-			const copyBtn = document.getElementById('copy-btn')!;
+      /* ===== STATS BAR ===== */
+      .stats-bar {
+        display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;
+        margin-bottom: 2.5rem;
+      }
+      .stat-card {
+        background: white; border-radius: var(--hs-radius); padding: 1.25rem;
+        text-align: center; border: 1px solid rgba(10, 61, 42, 0.08);
+      }
+      .stat-card .stat-num { font-size: 1.8rem; font-weight: 900; color: var(--hs-green); line-height: 1; }
+      .stat-card .stat-label { font-size: 0.75rem; color: var(--hs-text-light); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.25rem; }
 
-			let podcastScript = '';
-			let audioFilename = '';
-			const previewBtn = document.getElementById('preview-btn') as HTMLButtonElement;
-			const previewAudio = document.getElementById('preview-audio') as HTMLAudioElement;
+      /* ===== FOOTER OVERRIDE ===== */
+      .podcast-footer {
+        background: var(--hs-green); color: rgba(255,255,255,0.6);
+        text-align: center; padding: 2rem 1.5rem; font-size: 0.85rem;
+      }
+      .podcast-footer a { color: var(--hs-gold); text-decoration: none; }
+      .podcast-footer a:hover { color: var(--hs-gold-light); }
 
-			// Voice preview
-			previewBtn.addEventListener('click', async () => {
-				previewBtn.disabled = true;
-				previewBtn.textContent = 'Loading...';
-				previewAudio.style.display = 'none';
-				try {
-					const res = await fetch('/api/preview-voice', {
-						method: 'POST',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({ voice: voiceSelect.value }),
-					});
-					if (!res.ok) throw new Error();
-					const blob = await res.blob();
-					previewAudio.src = URL.createObjectURL(blob);
-					previewAudio.style.display = 'block';
-					previewAudio.play();
-				} catch {
-					showError('Voice preview failed. Try again.');
-				} finally {
-					previewBtn.disabled = false;
-					previewBtn.textContent = 'Preview Voice';
-				}
-			});
+      /* ===== RESPONSIVE ===== */
+      @media (max-width: 640px) {
+        .hero h1 { font-size: 1.8rem; }
+        .hero { padding: 2.5rem 1rem 2rem; }
+        .topic-grid { grid-template-columns: 1fr 1fr; }
+        .stats-bar { grid-template-columns: 1fr; gap: 0.5rem; }
+        .subscribe-row { flex-direction: column; align-items: center; }
+        .nav-links { display: none; }
+        .voice-section { flex-direction: column; align-items: stretch; }
+      }
 
-			// Load voices
-			fetch('/api/podcast').then(r => r.json()).then(voices => {
-				if (!Array.isArray(voices)) return;
-				voiceSelect.innerHTML = '';
-				for (const v of voices) {
-					const opt = document.createElement('option');
-					opt.value = v.id;
-					opt.textContent = v.name;
-					voiceSelect.appendChild(opt);
-				}
-				voiceSelect.value = 'en-US-AndrewNeural';
-			}).catch(() => {});
+      .hidden { display: none !important; }
 
-			// Generate — one button does everything
-			generateBtn.addEventListener('click', async () => {
-				const checked = document.querySelectorAll<HTMLInputElement>('input[name="category"]:checked');
-				const categories = Array.from(checked).map(el => el.value);
-				if (categories.length === 0) { showError('Please select at least one topic.'); return; }
+      /* Audio preview */
+      #preview-audio { width: 100%; margin-top: 0.75rem; display: none; }
+    </style>
+  </head>
+  <body>
+    <!-- NAV -->
+    <nav class="podcast-nav">
+      <a href="/" class="brand">
+        <div class="brand-icon">H</div>
+        <div>
+          <span class="brand-text">Bryan's Daily Podcast</span>
+          <span class="brand-sub">by Hen Solutions LLC</span>
+        </div>
+      </a>
+      <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="/podcast" class="active">Podcast</a>
+        <a href="/episodes">Episodes</a>
+        <a href="/about">About</a>
+      </div>
+    </nav>
 
-				hideError(); hideSuccess();
-				playerEl.classList.add('hidden');
-				loadingEl.classList.remove('hidden');
-				generateBtn.disabled = true;
-				loadingText.textContent = 'Fetching news, writing script, generating audio...';
-				loadingSub.textContent = 'This takes about 60-90 seconds — sit tight!';
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero-content">
+        <div class="hero-badge"><span class="pulse"></span> New episode daily at 6 AM ET</div>
+        <h1>Your Daily <span class="gold">10-Minute</span> News Briefing</h1>
+        <p class="subtitle">AI, Apple, AEC tech, and Detroit sports — delivered in your ear every morning so you start the day informed.</p>
+        <div class="subscribe-row">
+          <a href="https://podcasts.apple.com/podcast/bryans-daily-podcast/id1805827953" target="_blank" class="sub-btn primary">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 2a8 8 0 110 16 8 8 0 010-16zm0 3a2.5 2.5 0 00-1 4.8V17h2v-5.2A2.5 2.5 0 0012 7z"/></svg>
+            Apple Podcasts
+          </a>
+          <a href="https://matterdigest.pages.dev/bryans-daily/feed.xml" target="_blank" class="sub-btn outline">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.18 15.64a2.18 2.18 0 010 4.36 2.18 2.18 0 010-4.36zM4 4.44A15.56 15.56 0 0119.56 20h-2.83A12.73 12.73 0 004 7.27V4.44zm0 5.66A9.9 9.9 0 0113.9 20h-2.83A7.07 7.07 0 004 12.93v-2.83z"/></svg>
+            RSS Feed
+          </a>
+          <a href="/episodes" class="sub-btn outline">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>
+            All Episodes
+          </a>
+        </div>
+      </div>
+    </section>
 
-				try {
-					const res = await fetch('/api/podcast', {
-						method: 'POST',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({ categories, voice: voiceSelect.value }),
-					});
-					const data = await res.json();
+    <div class="page-container">
 
-					if (!res.ok || data.error) {
-						showError(data.error || 'Failed to generate podcast.');
-						return;
-					}
+      <!-- STATS -->
+      <div class="stats-bar">
+        <div class="stat-card">
+          <div class="stat-num">{episodes.length}</div>
+          <div class="stat-label">Episodes</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">5</div>
+          <div class="stat-label">Topic Categories</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">~10</div>
+          <div class="stat-label">Minutes Each</div>
+        </div>
+      </div>
 
-					podcastScript = data.script;
-					audioFilename = data.audioFilename;
-					titleEl.textContent = data.title;
-					metaEl.textContent = `${data.storiesCount} stories \u00B7 ${data.categories.join(', ')} \u00B7 ~${data.estimatedMinutes} min`;
-					scriptEl.textContent = podcastScript;
+      <!-- LATEST EPISODE -->
+      {recentEpisodes.length > 0 && (
+        <section class="latest-section">
+          <div class="section-label">Latest Episode</div>
+          <div class="latest-card">
+            <p class="ep-date">{formatDateLong(recentEpisodes[0].pubDate)}</p>
+            <h2 class="ep-title">{recentEpisodes[0].title}</h2>
+            <p class="ep-desc">{recentEpisodes[0].description}</p>
+            <div class="ep-tags">
+              {recentEpisodes[0].categories.map(cat => (
+                <span class="ep-tag">{cat}</span>
+              ))}
+            </div>
+            <div class="audio-player-wrap">
+              <audio controls preload="auto" src={`/api/episodes/${recentEpisodes[0].filename}`}></audio>
+            </div>
+            {recentEpisodes[0].showNotes && (
+              <div>
+                <button class="show-notes-toggle" onclick="this.nextElementSibling.classList.toggle('open'); this.textContent = this.nextElementSibling.classList.contains('open') ? '▾ Hide Show Notes' : '▸ Show Notes'">▸ Show Notes</button>
+                <div class="show-notes-content">{recentEpisodes[0].showNotes}</div>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
-					if (audioFilename) {
-						audioPlayer.src = `/api/episodes/${audioFilename}`;
-						audioContainer.classList.remove('hidden');
-						downloadAudioBtn.classList.remove('hidden');
-						audioStatus.textContent = '';
-						if (data.published) {
-							showSuccess('Episode published to your podcast feed! It will appear in Apple Podcasts shortly.');
-						}
-					} else {
-						audioStatus.textContent = `Audio: ${data.audioError || 'Generation failed'}`;
-						audioContainer.classList.remove('hidden');
-						audioPlayer.classList.add('hidden');
-						downloadAudioBtn.classList.add('hidden');
-					}
+      <!-- GENERATE ON DEMAND -->
+      <section class="generate-section">
+        <h2>Generate a Custom Episode</h2>
+        <p class="gen-sub">Pick your topics and get a fresh briefing in about 90 seconds.</p>
 
-					playerEl.classList.remove('hidden');
+        <div class="topic-grid" id="topic-grid">
+          <label class="topic-chip selected">
+            <input type="checkbox" name="category" value="ai" checked />
+            <span class="chip-dot"></span> AI & Claude Code
+          </label>
+          <label class="topic-chip selected">
+            <input type="checkbox" name="category" value="apple" checked />
+            <span class="chip-dot"></span> Apple
+          </label>
+          <label class="topic-chip selected">
+            <input type="checkbox" name="category" value="autodesk" checked />
+            <span class="chip-dot"></span> Graitec & Autodesk
+          </label>
+          <label class="topic-chip selected">
+            <input type="checkbox" name="category" value="detroit_sports" checked />
+            <span class="chip-dot"></span> Detroit Sports
+          </label>
+          <label class="topic-chip selected">
+            <input type="checkbox" name="category" value="college_sports" checked />
+            <span class="chip-dot"></span> College Sports
+          </label>
+        </div>
 
-				} catch {
-					showError('Network error — please check your connection and try again.');
-				} finally {
-					loadingEl.classList.add('hidden');
-					generateBtn.disabled = false;
-				}
-			});
+        <div class="voice-section">
+          <label>Voice:</label>
+          <select id="voice"><option value="elevenlabs-bryan">Bryan (My Voice)</option></select>
+          <button id="preview-btn" class="preview-voice-btn">Preview</button>
+        </div>
+        <audio id="preview-audio"></audio>
 
-			// Download audio
-			downloadAudioBtn.addEventListener('click', () => {
-				if (!audioFilename) return;
-				const a = document.createElement('a');
-				a.href = `/api/episodes/${audioFilename}`;
-				a.download = `bryans-daily-podcast-${new Date().toISOString().split('T')[0]}.mp3`;
-				document.body.appendChild(a);
-				a.click();
-				document.body.removeChild(a);
-			});
+        <button id="generate-btn" class="generate-btn">Generate My Podcast</button>
 
-			// Download script
-			downloadBtn.addEventListener('click', () => {
-				const blob = new Blob([podcastScript], { type: 'text/plain' });
-				const url = URL.createObjectURL(blob);
-				const a = document.createElement('a');
-				a.href = url;
-				a.download = `bryans-daily-podcast-${new Date().toISOString().split('T')[0]}.txt`;
-				document.body.appendChild(a);
-				a.click();
-				document.body.removeChild(a);
-				URL.revokeObjectURL(url);
-			});
+        <div class="loading-state" id="loading">
+          <div class="loading-spinner"></div>
+          <p class="step" id="loading-text">Starting...</p>
+          <p class="sub" id="loading-sub">This takes about 60-90 seconds</p>
+        </div>
 
-			// Copy script
-			copyBtn.addEventListener('click', async () => {
-				await navigator.clipboard.writeText(podcastScript);
-				copyBtn.textContent = 'Copied!';
-				setTimeout(() => { copyBtn.textContent = 'Copy Script'; }, 2000);
-			});
+        <div class="msg-error" id="error"></div>
+        <div class="msg-success" id="success"></div>
 
-			function showError(msg: string) { errorEl.textContent = msg; errorEl.classList.remove('hidden'); }
-			function hideError() { errorEl.classList.add('hidden'); }
-			function showSuccess(msg: string) { successEl.textContent = msg; successEl.classList.remove('hidden'); }
-			function hideSuccess() { successEl.classList.add('hidden'); }
-		</script>
-	</body>
+        <div class="gen-result" id="gen-result">
+          <h3 id="gen-title"></h3>
+          <p class="meta" id="gen-meta"></p>
+          <div class="audio-player-wrap">
+            <audio id="gen-audio" controls preload="auto"></audio>
+          </div>
+          <div class="script-box" id="gen-script"></div>
+          <div class="gen-actions">
+            <button id="dl-audio-btn" class="gen-action-btn">Download MP3</button>
+            <button id="dl-script-btn" class="gen-action-btn">Download Script</button>
+            <button id="copy-btn" class="gen-action-btn">Copy Script</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- RECENT EPISODES -->
+      {recentEpisodes.length > 1 && (
+        <section class="episodes-section">
+          <div class="section-label">Recent Episodes</div>
+          <div class="episodes-grid">
+            {recentEpisodes.slice(1).map(ep => {
+              const epMatch = ep.title.match(/Ep\.\s*(\d+)/);
+              const epNum = epMatch ? epMatch[1] : '?';
+              return (
+                <a href={`/episodes/${ep.id}`} class="ep-card">
+                  <div class="ep-num">#{epNum}</div>
+                  <div class="ep-info">
+                    <h3>{ep.title.replace(/^Ep\.\s*\d+\s*—\s*/, '').replace(/—\s*.*$/, '').trim() || ep.title}</h3>
+                    <p class="ep-meta">{formatDate(ep.pubDate)} · {formatDuration(ep.duration)} · {ep.categories.slice(0, 3).join(', ')}</p>
+                  </div>
+                  <div class="ep-play">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+          <a href="/episodes" class="view-all-link">View all {episodes.length} episodes →</a>
+        </section>
+      )}
+
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="podcast-footer">
+      <p>&copy; {new Date().getFullYear()} <a href="https://henbusinesssolutions.com">Hen Solutions LLC</a>. All rights reserved.</p>
+    </footer>
+
+    <script>
+      // Topic chips
+      document.querySelectorAll('.topic-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          const cb = chip.querySelector('input') as HTMLInputElement;
+          cb.checked = !cb.checked;
+          chip.classList.toggle('selected', cb.checked);
+        });
+      });
+
+      // Refs
+      const generateBtn = document.getElementById('generate-btn') as HTMLButtonElement;
+      const loadingEl = document.getElementById('loading')!;
+      const loadingText = document.getElementById('loading-text')!;
+      const loadingSub = document.getElementById('loading-sub')!;
+      const errorEl = document.getElementById('error')!;
+      const successEl = document.getElementById('success')!;
+      const voiceSelect = document.getElementById('voice') as HTMLSelectElement;
+      const genResult = document.getElementById('gen-result')!;
+      const genTitle = document.getElementById('gen-title')!;
+      const genMeta = document.getElementById('gen-meta')!;
+      const genAudio = document.getElementById('gen-audio') as HTMLAudioElement;
+      const genScript = document.getElementById('gen-script')!;
+      const previewBtn = document.getElementById('preview-btn') as HTMLButtonElement;
+      const previewAudio = document.getElementById('preview-audio') as HTMLAudioElement;
+
+      let podcastScript = '';
+      let audioFilename = '';
+
+      // Load voices
+      fetch('/api/podcast').then(r => r.json()).then(voices => {
+        if (!Array.isArray(voices)) return;
+        voiceSelect.innerHTML = '';
+        for (const v of voices) {
+          const opt = document.createElement('option');
+          opt.value = v.id; opt.textContent = v.name;
+          voiceSelect.appendChild(opt);
+        }
+        voiceSelect.value = 'elevenlabs-bryan';
+      }).catch(() => {});
+
+      // Voice preview
+      previewBtn.addEventListener('click', async () => {
+        previewBtn.disabled = true; previewBtn.textContent = 'Loading...';
+        previewAudio.style.display = 'none';
+        try {
+          const res = await fetch('/api/preview-voice', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ voice: voiceSelect.value }),
+          });
+          if (!res.ok) throw new Error();
+          const blob = await res.blob();
+          previewAudio.src = URL.createObjectURL(blob);
+          previewAudio.style.display = 'block';
+          previewAudio.play();
+        } catch { showError('Voice preview failed.'); }
+        finally { previewBtn.disabled = false; previewBtn.textContent = 'Preview'; }
+      });
+
+      const STEP_LABELS: Record<string, string> = {
+        pending: 'Starting podcast generation...',
+        fetching_news: 'Fetching latest news...',
+        generating_script: 'Writing your podcast script...',
+        generating_show_notes: 'Creating show notes...',
+        generating_audio: 'Converting to audio with your voice...',
+        publishing: 'Publishing episode...',
+      };
+
+      async function pollJobStatus(jobId: string): Promise<any> {
+        for (let i = 0; i < 120; i++) {
+          await new Promise(r => setTimeout(r, 3000));
+          try {
+            const res = await fetch(`/api/podcast-status?jobId=${jobId}`);
+            if (!res.ok) continue;
+            const status = await res.json();
+            loadingText.textContent = status.step || STEP_LABELS[status.status] || 'Working...';
+            if (status.progress) loadingSub.textContent = status.progress;
+            if (status.status === 'complete') return { ok: true, data: status.result };
+            if (status.status === 'error') return { ok: false, error: status.error };
+          } catch {}
+        }
+        return { ok: false, error: 'Timed out — check /episodes, it may have published.' };
+      }
+
+      generateBtn.addEventListener('click', async () => {
+        const categories = Array.from(document.querySelectorAll<HTMLInputElement>('input[name="category"]:checked')).map(el => el.value);
+        if (categories.length === 0) { showError('Select at least one topic.'); return; }
+
+        hideError(); hideSuccess();
+        genResult.classList.remove('visible');
+        loadingEl.classList.add('visible');
+        generateBtn.disabled = true;
+        loadingText.textContent = 'Starting...';
+        loadingSub.textContent = 'This takes about 60-90 seconds';
+
+        try {
+          const startRes = await fetch('/api/podcast', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ categories, voice: voiceSelect.value }),
+          });
+          const startData = await startRes.json();
+
+          if (!startRes.ok || startData.error) {
+            showError(startData.error || 'Failed to start.'); loadingEl.classList.remove('visible'); generateBtn.disabled = false; return;
+          }
+          if (startData.message && !startData.jobId) {
+            showSuccess(startData.message); loadingEl.classList.remove('visible'); generateBtn.disabled = false; return;
+          }
+
+          const result = await pollJobStatus(startData.jobId);
+          if (!result.ok) {
+            showError(result.error || 'Generation failed.'); loadingEl.classList.remove('visible'); generateBtn.disabled = false; return;
+          }
+
+          const data = result.data;
+          podcastScript = data.script;
+          audioFilename = data.audioFilename;
+          genTitle.textContent = data.title;
+          genMeta.textContent = `${data.storiesCount} stories · ${data.categories.join(', ')} · ~${data.estimatedMinutes} min`;
+          genScript.textContent = podcastScript;
+
+          if (audioFilename) {
+            genAudio.src = `/api/episodes/${audioFilename}`;
+            if (data.published) showSuccess('Episode published to your podcast feed!');
+          }
+          genResult.classList.add('visible');
+
+        } catch { showError('Network error — check your connection.'); }
+        finally { loadingEl.classList.remove('visible'); generateBtn.disabled = false; }
+      });
+
+      // Actions
+      document.getElementById('dl-audio-btn')!.addEventListener('click', () => {
+        if (!audioFilename) return;
+        const a = document.createElement('a');
+        a.href = `/api/episodes/${audioFilename}`;
+        a.download = `bryans-daily-${new Date().toISOString().split('T')[0]}.mp3`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      });
+      document.getElementById('dl-script-btn')!.addEventListener('click', () => {
+        const blob = new Blob([podcastScript], { type: 'text/plain' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `bryans-daily-${new Date().toISOString().split('T')[0]}.txt`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      });
+      document.getElementById('copy-btn')!.addEventListener('click', async () => {
+        await navigator.clipboard.writeText(podcastScript);
+        const btn = document.getElementById('copy-btn')!;
+        btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = 'Copy Script', 2000);
+      });
+
+      function showError(msg: string) { errorEl.textContent = msg; errorEl.style.display = 'block'; }
+      function hideError() { errorEl.style.display = 'none'; }
+      function showSuccess(msg: string) { successEl.textContent = msg; successEl.style.display = 'block'; }
+      function hideSuccess() { successEl.style.display = 'none'; }
+    </script>
+  </body>
 </html>

@@ -1,0 +1,14 @@
+{
+	"name": "bryans-daily-cron",
+	"compatibility_date": "2025-10-08",
+	"main": "src/index.ts",
+	"triggers": {
+		"crons": [
+			"0 11 * * *",
+			"0 13 * * *"
+		]
+	},
+	"vars": {
+		"PODCAST_WORKER_URL": "https://podcast.hhsolutions.cloud"
+	}
+}
