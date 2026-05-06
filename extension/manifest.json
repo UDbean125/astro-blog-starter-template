@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Save to Harbour",
+  "short_name": "Harbour",
+  "version": "1.0.0",
+  "description": "One-click save to your Harbour read-later library.",
+  "permissions": ["activeTab", "contextMenus", "scripting", "storage"],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_title": "Save to Harbour",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    },
+    "default_popup": "popup.html"
+  },
+  "background": { "service_worker": "background.js" },
+  "icons": {
+    "16":  "icons/icon-16.png",
+    "32":  "icons/icon-32.png",
+    "48":  "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "commands": {
+    "save-page": {
+      "suggested_key": { "default": "Ctrl+Shift+S", "mac": "Command+Shift+S" },
+      "description": "Save current tab to Harbour"
+    }
+  }
+}

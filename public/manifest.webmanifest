@@ -1,0 +1,38 @@
+{
+  "name": "Harbour",
+  "short_name": "Harbour",
+  "description": "A calm place for the things you want to read later.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "background_color": "#fdfaf3",
+  "theme_color": "#0f2547",
+  "orientation": "any",
+  "categories": ["productivity", "books", "news"],
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "Save a link", "short_name": "Save", "url": "/?save=", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Highlights", "short_name": "Highlights", "url": "/highlights" }
+  ],
+  "share_target": {
+    "action": "/",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "sharedUrl"
+    }
+  },
+  "protocol_handlers": [
+    { "protocol": "web+harbour", "url": "/?save=%s" }
+  ]
+}

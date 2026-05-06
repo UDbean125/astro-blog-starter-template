@@ -1,0 +1,148 @@
+---
+import Icon from "./Icon.astro";
+
+const path = Astro.url.pathname.replace(/\/$/, "") || "/";
+
+const nav = [
+	{ href: "/",          icon: "inbox",     label: "Library" },
+	{ href: "/reading",   icon: "book",      label: "Reading Now" },
+	{ href: "/highlights",icon: "highlight", label: "Highlights" },
+	{ href: "/archive",   icon: "archive",   label: "Archive" },
+	{ href: "/tags",      icon: "tag",       label: "Tags" },
+	{ href: "/collections",icon: "folder",   label: "Collections" },
+];
+
+const bottom = [
+	{ href: "/settings", icon: "settings", label: "Settings" },
+];
+---
+
+<aside class="sidebar" data-sidebar>
+	<div class="brand">
+		<a href="/" class="brand-link" aria-label="Harbour home">
+			<span class="brand-mark" aria-hidden="true"><Icon name="anchor" size={28} /></span>
+			<span class="brand-name">Harbour</span>
+		</a>
+		<button class="btn btn--icon btn--sm sidebar-toggle" data-sidebar-toggle aria-label="Collapse sidebar">
+			<Icon name="menu" size={20} />
+		</button>
+	</div>
+
+	<button class="btn btn--primary btn--lg save-btn" data-open-add aria-keyshortcuts="n">
+		<Icon name="plus" size={22} />
+		<span class="save-btn__label">Save a link</span>
+		<kbd class="kbd">N</kbd>
+	</button>
+
+	<nav class="nav" aria-label="Primary">
+		{nav.map((item) => (
+			<a href={item.href} class={`navitem ${path === item.href ? "is-active" : ""}`} data-nav>
+				<Icon name={item.icon} size={22} />
+				<span>{item.label}</span>
+			</a>
+		))}
+	</nav>
+
+	<div class="sidebar-foot">
+		<button class="navitem as-btn" data-theme-toggle aria-label="Toggle theme">
+			<Icon name="moon" size={22} />
+			<span>Theme</span>
+		</button>
+		{bottom.map((item) => (
+			<a href={item.href} class={`navitem ${path === item.href ? "is-active" : ""}`}>
+				<Icon name={item.icon} size={22} />
+				<span>{item.label}</span>
+			</a>
+		))}
+	</div>
+</aside>
+
+<style>
+.sidebar {
+	grid-area: side;
+	position: sticky;
+	top: 0;
+	align-self: start;
+	height: 100vh;
+	width: var(--nav-w);
+	padding: 16px 14px;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	border-right: 1px solid var(--border);
+	background: var(--bg-sunken);
+	transition: width var(--dur-med) var(--ease);
+	z-index: 20;
+}
+.sidebar[data-collapsed="true"] { width: var(--nav-w-collapsed); }
+.sidebar[data-collapsed="true"] .brand-name,
+.sidebar[data-collapsed="true"] .save-btn__label,
+.sidebar[data-collapsed="true"] .navitem > span,
+.sidebar[data-collapsed="true"] .kbd { display: none; }
+.sidebar[data-collapsed="true"] .save-btn { padding: 0; width: 56px; }
+.sidebar[data-collapsed="true"] .navitem { justify-content: center; padding: 12px; }
+
+.brand { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 4px; }
+.brand-link { display: inline-flex; align-items: center; gap: 10px; color: var(--text); font-weight: 800; font-size: 1.25rem; letter-spacing: -0.02em; text-decoration: none; }
+.brand-link:hover { text-decoration: none; }
+.brand-mark {
+	width: 40px; height: 40px;
+	display: inline-flex; align-items: center; justify-content: center;
+	background: var(--brand);
+	color: var(--brand-contrast);
+	border-radius: 12px;
+	box-shadow: var(--shadow-sm);
+}
+
+.save-btn { width: 100%; justify-content: flex-start; gap: 10px; padding: 0 16px; }
+.save-btn .kbd { margin-left: auto; }
+
+.kbd {
+	font-family: var(--font-mono);
+	font-size: 0.75rem;
+	background: rgba(0,0,0,0.15);
+	color: inherit;
+	padding: 2px 8px;
+	border-radius: 6px;
+	letter-spacing: 0.04em;
+}
+
+.nav { display: flex; flex-direction: column; gap: 2px; }
+.navitem {
+	display: inline-flex;
+	align-items: center;
+	gap: 12px;
+	padding: 12px 14px;
+	border-radius: var(--radius-md);
+	color: var(--text-muted);
+	font-weight: 600;
+	font-size: var(--fs-md);
+	text-decoration: none;
+	border: 0;
+	background: transparent;
+	cursor: pointer;
+	transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+	width: 100%;
+	text-align: left;
+}
+.navitem:hover { background: var(--surface); color: var(--text); text-decoration: none; }
+.navitem.is-active {
+	background: var(--surface);
+	color: var(--accent);
+	box-shadow: inset 0 0 0 2px var(--coral-100);
+}
+html[data-theme="dark"] .navitem.is-active { box-shadow: inset 0 0 0 2px rgba(249,178,51,0.25); }
+
+.sidebar-foot { margin-top: auto; display: flex; flex-direction: column; gap: 2px; }
+.as-btn { color: var(--text-muted); }
+
+@media (max-width: 900px) {
+	.sidebar {
+		position: fixed;
+		inset: 0 auto 0 0;
+		transform: translateX(-100%);
+		transition: transform var(--dur-med) var(--ease);
+	}
+	.sidebar[data-mobile-open="true"] { transform: translateX(0); box-shadow: var(--shadow-lg); }
+}
+</style>

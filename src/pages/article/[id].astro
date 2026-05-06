@@ -1,0 +1,585 @@
+---
+import AppLayout from "../../layouts/AppLayout.astro";
+import Icon from "../../components/Icon.astro";
+
+export const prerender = false;
+---
+
+<AppLayout pageTitle="" title="Reading" showSearch={false} showViewSwitcher={false} showBack={true}>
+	<article class="reader" data-reader hidden>
+		<header class="reader-head">
+			<div class="reader-meta small mute">
+				<img class="rh-fav" data-fav alt="" />
+				<span data-site></span>
+				<span class="dot">·</span>
+				<span data-mins></span>
+				<span class="dot">·</span>
+				<span data-saved></span>
+			</div>
+			<h1 class="reader-title" data-title></h1>
+			<p class="reader-desc mute big" data-desc></p>
+			<div class="reader-tags row row--wrap" data-tags></div>
+			<div class="reader-actions row">
+				<a class="btn btn--ghost" data-original href="#" target="_blank" rel="noopener noreferrer">
+					<Icon name="external" size={20} /> View original
+				</a>
+				<button class="btn btn--ghost" data-fav-toggle><Icon name="star" size={20} /><span>Favorite</span></button>
+				<button class="btn btn--ghost" data-archive-toggle><Icon name="archive" size={20} /><span>Archive</span></button>
+				<button class="btn btn--ghost" data-share><Icon name="share" size={20} /><span>Copy link</span></button>
+			</div>
+		</header>
+
+		<div class="reader-cover" data-cover hidden>
+			<img data-cover-img alt="" />
+		</div>
+
+		<div class="reader-body" data-body></div>
+
+		<footer class="reader-foot">
+			<div class="row">
+				<button class="btn btn--ghost" data-mark-read>
+					<Icon name="check" size={20} /><span>Mark as read &amp; archive</span>
+				</button>
+				<a class="btn btn--ghost" href="#highlights"><Icon name="highlight" size={20} /><span>Highlights (<span data-hl-count>0</span>)</span></a>
+			</div>
+			<section id="highlights" class="reader-highlights" data-highlights-list></section>
+		</footer>
+	</article>
+
+	<aside class="reader-toolbar" data-toolbar>
+		<button class="btn btn--icon btn--ghost" data-tts-play title="Play / Pause">
+			<Icon name="headphones" size={22} />
+		</button>
+		<button class="btn btn--icon btn--ghost" data-toggle-typo title="Reading settings">
+			<Icon name="type" size={22} />
+		</button>
+		<button class="btn btn--icon btn--ghost" data-highlight title="Highlight selection">
+			<Icon name="highlight" size={22} />
+		</button>
+	</aside>
+
+	<aside class="reader-typo" data-typo hidden>
+		<h3>Reading</h3>
+		<label>Font
+			<select data-typo-font class="select">
+				<option value="serif">Serif</option>
+				<option value="sans">Sans</option>
+				<option value="mono">Mono</option>
+			</select>
+		</label>
+		<label>Size <input type="range" data-typo-size min="16" max="26" step="1" /></label>
+		<label>Width <input type="range" data-typo-width min="52" max="88" step="2" /></label>
+		<label>Line height <input type="range" data-typo-lh min="14" max="22" step="1" /></label>
+		<h3>Listen</h3>
+		<label>Speed <input type="range" data-tts-rate min="0.7" max="1.8" step="0.1" /></label>
+		<label>Voice
+			<select data-tts-voice class="select"></select>
+		</label>
+	</aside>
+
+	<aside class="hl-popup" data-hl-popup hidden>
+		<button class="btn btn--icon btn--sm" data-hl-color="yellow" title="Yellow" style="background:var(--sun-300)">★</button>
+		<button class="btn btn--icon btn--sm" data-hl-color="coral"  title="Coral"  style="background:var(--coral-300)">★</button>
+		<button class="btn btn--icon btn--sm" data-hl-color="sea"    title="Sea"    style="background:var(--sea-300)">★</button>
+		<button class="btn btn--icon btn--sm" data-hl-color="navy"   title="Navy"   style="background:var(--navy-200)">★</button>
+		<button class="btn btn--ghost btn--sm" data-hl-note>+ Note</button>
+		<button class="btn btn--ghost btn--sm" data-hl-copy><Icon name="copy" size={14} />Copy</button>
+	</aside>
+
+	<section class="not-found" data-not-found hidden>
+		<h2>Article not found</h2>
+		<p class="mute big">It might have been deleted or saved on another device.</p>
+		<a href="/" class="btn btn--primary btn--lg">Back to library</a>
+	</section>
+</AppLayout>
+
+<style>
+.reader {
+	max-width: var(--reading-max);
+	margin: 0 auto;
+	padding: 28px 8px 100px;
+	font-family: var(--font-reading);
+	font-size: var(--reader-size, 20px);
+	line-height: var(--reader-lh, 1.7);
+	max-width: var(--reader-max-width, 68ch);
+}
+.reader[data-font="sans"] { font-family: var(--font-ui); }
+.reader[data-font="mono"] { font-family: var(--font-mono); }
+.reader-head { font-family: var(--font-ui); margin-bottom: 32px; }
+.reader-title { font-size: clamp(2rem, 4vw, 3rem); margin: 8px 0 12px; letter-spacing: -0.025em; line-height: 1.1; }
+.reader-desc { margin: 0 0 16px; }
+.reader-meta { display: flex; align-items: center; gap: 8px; }
+.reader-meta .dot { color: var(--text-subtle); }
+.rh-fav { width: 18px; height: 18px; border-radius: 4px; }
+.reader-tags { gap: 6px; margin-bottom: 16px; }
+.reader-actions { gap: 8px; flex-wrap: wrap; padding: 12px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+
+.reader-cover { margin: 24px 0 32px; border-radius: var(--radius-lg); overflow: hidden; }
+.reader-cover img { width: 100%; height: auto; display: block; }
+
+.reader-body p { margin: 0 0 1.2em; }
+.reader-body img { border-radius: var(--radius-md); margin: 24px auto; box-shadow: var(--shadow-sm); }
+.reader-body figure { margin: 24px 0; }
+.reader-body figcaption { font-size: var(--fs-sm); color: var(--text-muted); text-align: center; }
+.reader-body h1, .reader-body h2, .reader-body h3 { margin-top: 1.6em; font-family: var(--font-ui); }
+.reader-body blockquote {
+	border-left: 4px solid var(--accent);
+	padding: 4px 0 4px 22px;
+	color: var(--text-muted);
+	font-style: italic;
+	margin: 24px 0;
+}
+.reader-body pre {
+	background: var(--bg-sunken);
+	padding: 20px;
+	border-radius: var(--radius-md);
+	overflow: auto;
+	font-size: var(--fs-sm);
+	line-height: 1.5;
+	font-family: var(--font-mono);
+}
+.reader-body code { font-family: var(--font-mono); font-size: 0.9em; background: var(--bg-sunken); padding: 1px 6px; border-radius: 4px; }
+.reader-body pre code { background: transparent; padding: 0; }
+.reader-body a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+.reader-body mark.hl-yellow { background: var(--sun-300); color: var(--ink-900); padding: 0 2px; border-radius: 3px; }
+.reader-body mark.hl-coral  { background: var(--coral-300); color: var(--ink-900); padding: 0 2px; border-radius: 3px; }
+.reader-body mark.hl-sea    { background: var(--sea-300); color: var(--ink-900); padding: 0 2px; border-radius: 3px; }
+.reader-body mark.hl-navy   { background: var(--navy-200); color: var(--ink-900); padding: 0 2px; border-radius: 3px; }
+.reader-body .tts-active { background: rgba(249,178,51,0.4); border-radius: 3px; }
+
+.reader-foot { margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border); font-family: var(--font-ui); }
+.reader-highlights { margin-top: 24px; display: grid; gap: 12px; }
+.hl-card {
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-md);
+	padding: 14px 16px;
+	display: flex; gap: 12px;
+	align-items: flex-start;
+}
+.hl-card .hl-stripe { width: 4px; align-self: stretch; border-radius: 2px; }
+.hl-card .hl-stripe.hl-yellow { background: var(--sun-300); }
+.hl-card .hl-stripe.hl-coral  { background: var(--coral-300); }
+.hl-card .hl-stripe.hl-sea    { background: var(--sea-300); }
+.hl-card .hl-stripe.hl-navy   { background: var(--navy-300); }
+
+.reader-toolbar {
+	position: fixed;
+	right: 24px;
+	bottom: 24px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	background: var(--surface);
+	padding: 8px;
+	border-radius: var(--radius-pill);
+	box-shadow: var(--shadow-lg);
+	border: 1px solid var(--border);
+	z-index: 30;
+}
+@media (max-width: 720px) {
+	.reader-toolbar { right: 12px; bottom: 12px; flex-direction: row; }
+}
+
+.reader-typo {
+	position: fixed;
+	right: 88px;
+	bottom: 24px;
+	width: 280px;
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-lg);
+	padding: 18px;
+	box-shadow: var(--shadow-lg);
+	z-index: 30;
+	font-family: var(--font-ui);
+	display: flex; flex-direction: column; gap: 12px;
+}
+.reader-typo h3 { font-size: var(--fs-sm); margin: 4px 0 -4px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
+.reader-typo label { display: flex; flex-direction: column; gap: 4px; font-size: var(--fs-sm); font-weight: 600; }
+.reader-typo input[type="range"] { width: 100%; accent-color: var(--accent); }
+@media (max-width: 720px) {
+	.reader-typo { right: 12px; left: 12px; bottom: 80px; width: auto; }
+}
+
+.hl-popup {
+	position: fixed;
+	z-index: 40;
+	background: var(--ink-900);
+	color: #fff;
+	border-radius: var(--radius-pill);
+	padding: 6px;
+	display: flex;
+	gap: 4px;
+	box-shadow: var(--shadow-lg);
+	font-family: var(--font-ui);
+}
+.hl-popup .btn { background: transparent; border: 0; color: #fff; min-height: 32px; padding: 0 8px; font-weight: 700; }
+.hl-popup .btn[data-hl-color] { width: 28px; height: 28px; border-radius: 50%; padding: 0; color: var(--ink-900); }
+
+.not-found { text-align: center; padding: 80px 20px; }
+</style>
+
+<script>
+import { articles, highlights, newId } from "../../lib/db";
+import type { Article, Highlight } from "../../lib/types";
+import { loadSettings, saveSettings } from "../../lib/settings";
+import { toast } from "../../lib/toast";
+import { formatRelative, hostOf } from "../../lib/util";
+import { icon } from "../../lib/icons";
+
+const id = location.pathname.split("/").pop() || "";
+const reader = document.querySelector<HTMLElement>("[data-reader]")!;
+const notFound = document.querySelector<HTMLElement>("[data-not-found]")!;
+
+let article: Article | null = null;
+let hls: Highlight[] = [];
+
+async function load() {
+	article = (await articles.get(id)) ?? null;
+	if (!article) {
+		notFound.hidden = false;
+		return;
+	}
+	reader.hidden = false;
+
+	const fav = reader.querySelector<HTMLImageElement>("[data-fav]")!;
+	if (article.favicon) { fav.src = article.favicon; fav.alt = ""; } else { fav.style.display = "none"; }
+
+	(reader.querySelector("[data-site]") as HTMLElement).textContent = article.siteName ?? hostOf(article.url);
+	(reader.querySelector("[data-mins]") as HTMLElement).textContent = `${article.readingMinutes ?? "?"} min read`;
+	(reader.querySelector("[data-saved]") as HTMLElement).textContent = `Saved ${formatRelative(article.savedAt)}`;
+	(reader.querySelector("[data-title]") as HTMLElement).textContent = article.title;
+
+	const desc = reader.querySelector<HTMLElement>("[data-desc]")!;
+	if (article.description) desc.textContent = article.description; else desc.style.display = "none";
+
+	(reader.querySelector("[data-original]") as HTMLAnchorElement).href = article.url;
+
+	const tagsEl = reader.querySelector<HTMLElement>("[data-tags]")!;
+	tagsEl.innerHTML = article.tags.map(t => `<a href="/tags/${encodeURIComponent(t)}" class="chip chip--sea">${escapeHtml(t)}</a>`).join("");
+
+	const coverEl = reader.querySelector<HTMLElement>("[data-cover]")!;
+	if (article.coverImage) {
+		coverEl.hidden = false;
+		(coverEl.querySelector("[data-cover-img]") as HTMLImageElement).src = article.coverImage;
+	}
+
+	const body = reader.querySelector<HTMLElement>("[data-body]")!;
+	if (article.content && article.content.trim().length > 0) {
+		body.innerHTML = article.content;
+	} else {
+		body.innerHTML = `
+			<p class="mute">We couldn't extract the article body. Open the original to read it:</p>
+			<p><a class="btn btn--primary" href="${article.url}" target="_blank" rel="noopener noreferrer">Open original</a></p>`;
+	}
+
+	// Mark as in-progress
+	if (article.isUnread) {
+		article.isUnread = false;
+		article.status = article.status === "inbox" ? "reading" : article.status;
+		await articles.put(article);
+	}
+
+	hls = await highlights.byArticle(id);
+	renderHighlights();
+	applyTypography();
+	applyHighlights();
+	restoreScroll();
+
+	// Fav state
+	updateFavBtn();
+	updateArchiveBtn();
+
+	// Auto-listen if ?listen=1
+	if (new URLSearchParams(location.search).get("listen") === "1") {
+		setTimeout(() => playTTS(), 600);
+	}
+}
+
+/* ---------- Typography ---------- */
+function applyTypography() {
+	const s = loadSettings();
+	reader.style.setProperty("--reader-size", `${s.readerSize}px`);
+	reader.style.setProperty("--reader-lh", String(s.readerLineHeight));
+	reader.style.setProperty("--reader-max-width", `${s.readerWidth}ch`);
+	reader.dataset.font = s.readerFont;
+
+	const t = document.querySelector<HTMLElement>("[data-typo]")!;
+	(t.querySelector("[data-typo-font]") as HTMLSelectElement).value = s.readerFont;
+	(t.querySelector("[data-typo-size]") as HTMLInputElement).value = String(s.readerSize);
+	(t.querySelector("[data-typo-width]") as HTMLInputElement).value = String(s.readerWidth);
+	(t.querySelector("[data-typo-lh]") as HTMLInputElement).value = String(Math.round(s.readerLineHeight * 10));
+	(t.querySelector("[data-tts-rate]") as HTMLInputElement).value = String(s.ttsRate);
+}
+
+document.querySelector<HTMLButtonElement>("[data-toggle-typo]")?.addEventListener("click", () => {
+	const t = document.querySelector<HTMLElement>("[data-typo]")!;
+	t.hidden = !t.hidden;
+});
+
+const typoEl = document.querySelector<HTMLElement>("[data-typo]")!;
+typoEl.addEventListener("input", (e) => {
+	const t = e.target as HTMLInputElement | HTMLSelectElement;
+	const s: Partial<import("../../lib/types").Settings> = {};
+	if (t.matches("[data-typo-font]")) s.readerFont = t.value as any;
+	else if (t.matches("[data-typo-size]")) s.readerSize = Number(t.value);
+	else if (t.matches("[data-typo-width]")) s.readerWidth = Number(t.value);
+	else if (t.matches("[data-typo-lh]"))   s.readerLineHeight = Number(t.value) / 10;
+	else if (t.matches("[data-tts-rate]"))  s.ttsRate = Number(t.value);
+	else if (t.matches("[data-tts-voice]")) s.ttsVoice = t.value;
+	saveSettings(s);
+	applyTypography();
+});
+
+/* ---------- Voice picker ---------- */
+function loadVoices() {
+	const sel = document.querySelector<HTMLSelectElement>("[data-tts-voice]")!;
+	const voices = speechSynthesis.getVoices().filter(v => v.lang.startsWith("en") || v.default);
+	sel.innerHTML = "";
+	const def = document.createElement("option"); def.value = ""; def.textContent = "Default voice"; sel.appendChild(def);
+	for (const v of voices) {
+		const o = document.createElement("option");
+		o.value = v.name;
+		o.textContent = `${v.name} (${v.lang})${v.default ? " · default" : ""}`;
+		sel.appendChild(o);
+	}
+	const s = loadSettings();
+	if (s.ttsVoice) sel.value = s.ttsVoice;
+}
+if (typeof speechSynthesis !== "undefined") {
+	loadVoices();
+	speechSynthesis.addEventListener?.("voiceschanged", loadVoices);
+	setTimeout(loadVoices, 800);
+}
+
+/* ---------- TTS ---------- */
+let utter: SpeechSynthesisUtterance | null = null;
+let isPlaying = false;
+let chunkIdx = 0;
+let chunks: HTMLElement[] = [];
+
+function chunksOfBody(): HTMLElement[] {
+	const body = reader.querySelector<HTMLElement>("[data-body]")!;
+	return Array.from(body.querySelectorAll<HTMLElement>("p, h1, h2, h3, li, blockquote"));
+}
+function speakChunk(i: number) {
+	chunks.forEach(c => c.classList.remove("tts-active"));
+	if (i >= chunks.length) { stopTTS(); return; }
+	const el = chunks[i];
+	el.classList.add("tts-active");
+	el.scrollIntoView({ behavior: "smooth", block: "center" });
+	const text = el.innerText;
+	if (!text.trim()) { speakChunk(i + 1); return; }
+	utter = new SpeechSynthesisUtterance(text);
+	const s = loadSettings();
+	utter.rate = s.ttsRate;
+	if (s.ttsVoice) {
+		const v = speechSynthesis.getVoices().find(v => v.name === s.ttsVoice);
+		if (v) utter.voice = v;
+	}
+	utter.onend = () => { chunkIdx = i + 1; if (isPlaying) speakChunk(chunkIdx); };
+	utter.onerror = () => { chunkIdx = i + 1; if (isPlaying) speakChunk(chunkIdx); };
+	speechSynthesis.speak(utter);
+}
+function playTTS() {
+	if (!("speechSynthesis" in window)) { toast("Text-to-speech isn't supported here."); return; }
+	if (isPlaying) { speechSynthesis.pause(); isPlaying = false; updateTTSBtn(); return; }
+	if (utter && speechSynthesis.paused) { speechSynthesis.resume(); isPlaying = true; updateTTSBtn(); return; }
+	chunks = chunksOfBody();
+	chunkIdx = 0;
+	isPlaying = true;
+	updateTTSBtn();
+	speakChunk(0);
+}
+function stopTTS() {
+	speechSynthesis.cancel();
+	chunks.forEach(c => c.classList.remove("tts-active"));
+	isPlaying = false;
+	utter = null;
+	updateTTSBtn();
+}
+function updateTTSBtn() {
+	const btn = document.querySelector<HTMLButtonElement>("[data-tts-play]")!;
+	btn.innerHTML = isPlaying ? icon("pause", 22) : icon("headphones", 22);
+}
+document.querySelector<HTMLButtonElement>("[data-tts-play]")?.addEventListener("click", () => playTTS());
+window.addEventListener("beforeunload", () => speechSynthesis.cancel());
+
+/* ---------- Highlights ---------- */
+function applyHighlights() {
+	const body = reader.querySelector<HTMLElement>("[data-body]")!;
+	// Use simple string-replace approach for highlight rendering – stable enough
+	// across re-renders, and avoids fiddly Range serialization.
+	if (!hls.length) return;
+	for (const h of hls) {
+		const safe = h.text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+		const re = new RegExp(safe, "g");
+		// only highlight the first occurrence per highlight id
+		let replaced = false;
+		body.innerHTML = body.innerHTML.replace(re, (m) => {
+			if (replaced) return m;
+			replaced = true;
+			return `<mark class="hl-${h.color}" data-hl-id="${h.id}">${m}</mark>`;
+		});
+	}
+}
+
+function renderHighlights() {
+	const list = document.querySelector<HTMLElement>("[data-highlights-list]")!;
+	(document.querySelector("[data-hl-count]") as HTMLElement).textContent = String(hls.length);
+	list.innerHTML = hls
+		.sort((a, b) => a.createdAt - b.createdAt)
+		.map(h => `
+			<div class="hl-card">
+				<div class="hl-stripe hl-${h.color}"></div>
+				<div class="grow">
+					<p>${escapeHtml(h.text)}</p>
+					${h.note ? `<p class="mute small">${escapeHtml(h.note)}</p>` : ""}
+				</div>
+				<button class="btn btn--icon btn--sm btn--danger" data-del-hl="${h.id}" title="Remove">${icon("trash", 16)}</button>
+			</div>`)
+		.join("");
+}
+
+document.querySelector<HTMLElement>("[data-highlights-list]")?.addEventListener("click", async (e) => {
+	const b = (e.target as HTMLElement).closest<HTMLElement>("[data-del-hl]");
+	if (!b) return;
+	const hid = b.getAttribute("data-del-hl")!;
+	await highlights.remove(hid);
+	hls = hls.filter(h => h.id !== hid);
+	renderHighlights();
+	applyHighlights();
+});
+
+/* Selection-driven highlight popup */
+const hlPopup = document.querySelector<HTMLElement>("[data-hl-popup]")!;
+let pendingSelectionText = "";
+function showPopupForSelection() {
+	const sel = window.getSelection();
+	if (!sel || sel.isCollapsed) { hlPopup.hidden = true; return; }
+	const text = sel.toString().trim();
+	if (text.length < 4) { hlPopup.hidden = true; return; }
+	const range = sel.getRangeAt(0);
+	if (!reader.contains(range.commonAncestorContainer)) { hlPopup.hidden = true; return; }
+	const r = range.getBoundingClientRect();
+	hlPopup.style.left = `${Math.max(8, Math.min(r.left + r.width / 2 - 100, window.innerWidth - 220))}px`;
+	hlPopup.style.top = `${Math.max(50, r.top - 50)}px`;
+	hlPopup.hidden = false;
+	pendingSelectionText = text;
+}
+document.addEventListener("mouseup", showPopupForSelection);
+document.addEventListener("touchend", () => setTimeout(showPopupForSelection, 50));
+document.addEventListener("scroll", () => { hlPopup.hidden = true; }, { passive: true });
+
+hlPopup.addEventListener("click", async (e) => {
+	const t = e.target as HTMLElement;
+	if (!article || !pendingSelectionText) return;
+	if (t.closest("[data-hl-color]")) {
+		const color = (t.closest("[data-hl-color]") as HTMLElement).dataset.hlColor as Highlight["color"];
+		const h: Highlight = {
+			id: newId("h_"),
+			articleId: article.id,
+			text: pendingSelectionText,
+			color,
+			createdAt: Date.now(),
+		};
+		await highlights.put(h);
+		hls.push(h);
+		applyHighlights();
+		renderHighlights();
+		toast("Highlight saved");
+	} else if (t.closest("[data-hl-note]")) {
+		const note = prompt("Add a note for this highlight:");
+		if (note != null) {
+			const h: Highlight = {
+				id: newId("h_"), articleId: article.id, text: pendingSelectionText,
+				color: "yellow", createdAt: Date.now(), note,
+			};
+			await highlights.put(h);
+			hls.push(h);
+			applyHighlights();
+			renderHighlights();
+			toast("Highlight + note saved");
+		}
+	} else if (t.closest("[data-hl-copy]")) {
+		try { await navigator.clipboard.writeText(pendingSelectionText); toast("Copied"); } catch { toast("Couldn't copy"); }
+	}
+	hlPopup.hidden = true;
+	window.getSelection()?.removeAllRanges();
+});
+
+document.querySelector<HTMLButtonElement>("[data-highlight]")?.addEventListener("click", () => {
+	showPopupForSelection();
+});
+
+/* ---------- Progress / favorite / archive ---------- */
+function updateFavBtn() {
+	const btn = document.querySelector<HTMLButtonElement>("[data-fav-toggle]")!;
+	if (!article) return;
+	btn.innerHTML = `${article.isFavorite ? icon("starFill", 20) : icon("star", 20)}<span>${article.isFavorite ? "Favorited" : "Favorite"}</span>`;
+}
+function updateArchiveBtn() {
+	const btn = document.querySelector<HTMLButtonElement>("[data-archive-toggle]")!;
+	if (!article) return;
+	btn.innerHTML = `${icon("archive", 20)}<span>${article.status === "archived" ? "Restore" : "Archive"}</span>`;
+}
+document.querySelector<HTMLButtonElement>("[data-fav-toggle]")?.addEventListener("click", async () => {
+	if (!article) return;
+	article.isFavorite = !article.isFavorite;
+	article.updatedAt = Date.now();
+	await articles.put(article);
+	updateFavBtn();
+});
+document.querySelector<HTMLButtonElement>("[data-archive-toggle]")?.addEventListener("click", async () => {
+	if (!article) return;
+	article.status = article.status === "archived" ? "inbox" : "archived";
+	article.updatedAt = Date.now();
+	await articles.put(article);
+	updateArchiveBtn();
+	toast(article.status === "archived" ? "Archived" : "Restored");
+});
+document.querySelector<HTMLButtonElement>("[data-mark-read]")?.addEventListener("click", async () => {
+	if (!article) return;
+	article.status = "archived";
+	article.progress = 1;
+	article.isUnread = false;
+	article.updatedAt = Date.now();
+	await articles.put(article);
+	toast("Marked as read");
+	setTimeout(() => location.href = "/", 600);
+});
+document.querySelector<HTMLButtonElement>("[data-share]")?.addEventListener("click", async () => {
+	if (!article) return;
+	try { await navigator.clipboard.writeText(article.url); toast("Link copied"); } catch { toast("Couldn't copy"); }
+});
+
+/* Save scroll progress */
+function restoreScroll() {
+	if (!article) return;
+	requestAnimationFrame(() => {
+		const docH = document.documentElement.scrollHeight - window.innerHeight;
+		if (article!.scrollY && docH > 0) window.scrollTo({ top: article!.scrollY, behavior: "instant" as any });
+	});
+}
+let saveT: any;
+window.addEventListener("scroll", () => {
+	if (!article) return;
+	clearTimeout(saveT);
+	saveT = setTimeout(async () => {
+		if (!article) return;
+		const docH = document.documentElement.scrollHeight - window.innerHeight;
+		const y = window.scrollY;
+		article.scrollY = y;
+		article.progress = docH > 0 ? Math.min(1, Math.max(0, y / docH)) : 0;
+		article.updatedAt = Date.now();
+		await articles.put(article);
+	}, 600);
+}, { passive: true });
+
+function escapeHtml(s: string): string {
+	return s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
+}
+
+load();
+</script>

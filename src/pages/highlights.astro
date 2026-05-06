@@ -1,0 +1,63 @@
+---
+import AppLayout from "../layouts/AppLayout.astro";
+---
+
+<AppLayout title="Highlights" pageTitle="Highlights" subtitle="Every passage you've saved." showViewSwitcher={false}>
+	<section class="hl-list" data-hl-list></section>
+	<div class="empty-state" data-empty hidden>
+		<h2>No highlights yet</h2>
+		<p class="mute big">Open any article and select text to save your first highlight.</p>
+	</div>
+</AppLayout>
+
+<style>
+.hl-list { display: grid; gap: 14px; padding: 24px 0 60px; }
+.hl-row {
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-lg);
+	padding: 18px 20px;
+	display: flex; gap: 14px;
+}
+.hl-row .stripe { width: 6px; align-self: stretch; border-radius: 3px; }
+.hl-row .stripe.hl-yellow { background: var(--sun-300); }
+.hl-row .stripe.hl-coral  { background: var(--coral-300); }
+.hl-row .stripe.hl-sea    { background: var(--sea-300); }
+.hl-row .stripe.hl-navy   { background: var(--navy-300); }
+.hl-row blockquote { margin: 0; font-family: var(--font-reading); font-size: 1.125rem; color: var(--text); }
+.hl-row .src { font-size: var(--fs-sm); color: var(--text-muted); margin-top: 8px; }
+.hl-row .src a { color: var(--accent); }
+.empty-state { text-align: center; padding: 80px 20px; }
+</style>
+
+<script>
+import { articles, highlights } from "../lib/db";
+import type { Article, Highlight } from "../lib/types";
+import { formatRelative } from "../lib/util";
+
+const list = document.querySelector<HTMLElement>("[data-hl-list]")!;
+const empty = document.querySelector<HTMLElement>("[data-empty]")!;
+
+const escapeHtml = (s: string) => s.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c] as string));
+
+(async () => {
+	const [hls, all] = await Promise.all([highlights.all(), articles.all()]);
+	if (!hls.length) { empty.hidden = false; return; }
+	const byId: Record<string, Article | undefined> = {};
+	for (const a of all) byId[a.id] = a;
+
+	list.innerHTML = hls
+		.sort((a, b) => b.createdAt - a.createdAt)
+		.map(h => {
+			const a = byId[h.articleId];
+			return `<div class="hl-row">
+				<div class="stripe hl-${h.color}"></div>
+				<div class="grow">
+					<blockquote>${escapeHtml(h.text)}</blockquote>
+					${h.note ? `<p class="mute small">${escapeHtml(h.note)}</p>` : ""}
+					<div class="src">From <a href="/article/${h.articleId}">${escapeHtml(a?.title ?? "Article")}</a> · ${formatRelative(h.createdAt)}</div>
+				</div>
+			</div>`;
+		}).join("");
+})();
+</script>

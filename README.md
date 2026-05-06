@@ -1,64 +1,83 @@
-# Astro Starter Kit: Blog
+# Harbour ⚓
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/cloudflare/templates/tree/main/astro-blog-starter-template)
+A calm place for the things you want to read later.
 
-![Astro Template Preview](https://github.com/withastro/astro/assets/2244813/ff10799f-a816-4703-b967-c78997e8323d)
+Harbour is a read-later app inspired by the best of Matter, Pocket, and Raindrop.io. Save links, read or listen, highlight passages, organize with tags and nested collections — all from one beautifully simple interface.
 
-<!-- dash-content-start -->
+Built on Astro + Cloudflare Workers. Stores articles client-side (IndexedDB) so the entire library is yours. Ships as a PWA installable on every modern OS, plus a Chrome/Safari extension and thin native wrappers for the App Store and Play Store.
 
-Create a blog with Astro and deploy it on Cloudflare Workers as a [static website](https://developers.cloudflare.com/workers/static-assets/).
+## Features
 
-Features:
+- **Save anything** — paste a URL, use the bookmarklet, or one-click save with the browser extension
+- **Read it your way** — clean reading view with adjustable font, size, line height, and column width
+- **Listen to it** — built-in text-to-speech using the system voices on every platform
+- **Highlight + take notes** — four colors, optional notes, easy export
+- **Organize** — tags, nested collections, search, bulk edit
+- **Find duplicates** — automatic deduplication across saves
+- **Bring your data** — JSON import/export; nothing leaves your device unless you want it to
+- **Offline first** — full PWA, works without a network once installed
+- **Bold, friendly UI** — big buttons, big icons, generous spacing, instant dark mode
 
-- ✅ Minimal styling (make it your own!)
-- ✅ 100/100 Lighthouse performance
-- ✅ SEO-friendly with canonical URLs and OpenGraph data
-- ✅ Sitemap support
-- ✅ RSS Feed support
-- ✅ Markdown & MDX support
-- ✅ Built-in Observability logging
+## Project structure
 
-<!-- dash-content-end -->
+```
+src/
+  pages/                # Routes (Library, Reader, Highlights, Tags, Collections, Settings, /api/extract)
+  components/           # Sidebar, Topbar, AddArticleModal, CommandBar, Icon
+  layouts/AppLayout.astro
+  lib/                  # types, db (IndexedDB), readability, settings, util, icons, toast
+  scripts/app.ts        # Global client runtime (theme, shortcuts, modals)
+  styles/global.css     # Design system
 
-## Getting Started
+public/
+  manifest.webmanifest  # PWA manifest with share-target + protocol-handler
+  sw.js                 # Service worker (app-shell caching)
+  icons/                # PWA icons (generated via scripts/gen-icons.mjs)
+  favicon.svg, og-default.svg
 
-Outside of this repo, you can start a new project with this template using [C3](https://developers.cloudflare.com/pages/get-started/c3/) (the `create-cloudflare` CLI):
-
-```bash
-npm create cloudflare@latest -- --template=cloudflare/templates/astro-blog-starter-template
+extension/              # Chrome/Edge/Brave/Safari Web Extension (MV3)
+native/                 # Apple (iOS/iPadOS/macOS) + Android (TWA) wrappers
+scripts/                # Build helpers (icon generation)
 ```
 
-A live public deployment of this template is available at [https://astro-blog-starter-template.templates.workers.dev](https://astro-blog-starter-template.templates.workers.dev)
+## Develop
 
-## 🚀 Project Structure
+```bash
+npm install
+npm run dev          # http://localhost:4321
+```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+Other useful scripts:
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+```bash
+npm run build        # production build
+npm run preview      # build + serve via wrangler dev
+npm run deploy       # deploy to Cloudflare Workers
+npm run icons        # regenerate PWA + extension icons
+```
 
-The `src/content/` directory contains "collections" of related Markdown and MDX documents. Use `getCollection()` to retrieve posts from `src/content/blog/`, and type-check your frontmatter using an optional schema. See [Astro's Content Collections docs](https://docs.astro.build/en/guides/content-collections/) to learn more.
+## Deploy (Cloudflare Workers)
 
-Any static assets, like images, can be placed in the `public/` directory.
+The repo already has a Cloudflare Workers integration. Pushing to `main` triggers an automatic build & deploy. To deploy from the CLI:
 
-## 🧞 Commands
+```bash
+npm run deploy
+```
 
-All commands are run from the root of the project, from a terminal:
+The Cloudflare adapter exposes the `/api/extract` server endpoint as a Worker route so URL fetches bypass CORS.
 
-| Command                           | Action                                           |
-| :-------------------------------- | :----------------------------------------------- |
-| `npm install`                     | Installs dependencies                            |
-| `npm run dev`                     | Starts local dev server at `localhost:4321`      |
-| `npm run build`                   | Build your production site to `./dist/`          |
-| `npm run preview`                 | Preview your build locally, before deploying     |
-| `npm run astro ...`               | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help`         | Get help using the Astro CLI                     |
-| `npm run build && npm run deploy` | Deploy your production site to Cloudflare        |
-| `npm wrangler tail`               | View real-time logs for all Workers              |
+## Browser extensions
 
-## 👀 Want to learn more?
+See [`extension/README.md`](./extension/README.md). Manifest V3 — works in Chrome, Edge, Brave, Arc, and (via Xcode wrap) Safari on macOS/iOS.
 
-Check out [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+## Native apps
 
-## Credit
+See [`native/README.md`](./native/README.md). Thin SwiftUI / TWA shells over the deployed PWA. One-time Xcode and Android Studio wrap, then App Store / Play Store distribution.
 
-This theme is based off of the lovely [Bear Blog](https://github.com/HermanMartinus/bearblog/).
+## Why local-first storage?
+
+Read-later apps fail when their backend goes away (RIP Pocket, July 2025). Harbour keeps your library in IndexedDB on your device — fast, offline, and yours. Backups are a JSON export away. The Cloudflare Worker is only used for the URL fetcher; everything else runs in your browser.
+
+## License
+
+MIT.

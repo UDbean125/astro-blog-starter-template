@@ -1,0 +1,45 @@
+---
+import AppLayout from "../../layouts/AppLayout.astro";
+export const prerender = false;
+---
+
+<AppLayout title="Tag" pageTitle="" showViewSwitcher={true} showBack={true}>
+	<h1 class="tag-h" data-tag-title></h1>
+	<section class="lib" data-lib data-view="grid"></section>
+	<div class="empty-state" data-empty hidden>
+		<h2>Nothing tagged here</h2>
+		<p class="mute big">Try another tag, or save more articles.</p>
+	</div>
+</AppLayout>
+
+<style>
+.tag-h { padding: 18px 0 8px; font-size: 2rem; }
+</style>
+
+<script>
+import { articles } from "../../lib/db";
+import { formatRelative, hostOf } from "../../lib/util";
+
+const tag = decodeURIComponent(location.pathname.split("/").pop()!);
+(document.querySelector("[data-tag-title]") as HTMLElement).textContent = `#${tag}`;
+const lib = document.querySelector<HTMLElement>("[data-lib]")!;
+const empty = document.querySelector<HTMLElement>("[data-empty]")!;
+const escapeHtml = (s: string) => s.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c] as string));
+
+(async () => {
+	const all = (await articles.all()).filter(a => a.tags.includes(tag));
+	if (!all.length) { empty.hidden = false; return; }
+	lib.innerHTML = all.sort((a,b)=>b.savedAt-a.savedAt).map(a => {
+		const cover = a.coverImage
+			? `<img class="cover" src="${a.coverImage}" alt="" loading="lazy" onerror="this.style.display='none'" />`
+			: `<div class="cover cover--fallback"><span>${hostOf(a.url).split(".")[0]?.[0]?.toUpperCase() || "·"}</span></div>`;
+		return `<article class="article-card card">
+			<a class="card-link" href="/article/${a.id}">${cover}</a>
+			<div class="card-body">
+				<div class="card-meta small mute"><span>${escapeHtml(hostOf(a.url))}</span><span>·</span><span>${escapeHtml(formatRelative(a.savedAt))}</span></div>
+				<h3 class="card-title"><a href="/article/${a.id}">${escapeHtml(a.title)}</a></h3>
+			</div>
+		</article>`;
+	}).join("");
+})();
+</script>

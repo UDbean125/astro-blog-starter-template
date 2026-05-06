@@ -1,0 +1,71 @@
+---
+import AppLayout from "../../layouts/AppLayout.astro";
+import Icon from "../../components/Icon.astro";
+---
+
+<AppLayout title="Collections" pageTitle="Collections" subtitle="Group articles into nested folders." showViewSwitcher={false}>
+	<div class="row" style="padding: 16px 0; gap: 8px; flex-wrap: wrap;">
+		<button class="btn btn--primary" data-new-coll><Icon name="plus" size={18} />New collection</button>
+	</div>
+	<section class="coll-grid" data-coll-list></section>
+	<div class="empty-state" data-empty hidden>
+		<h2>No collections yet</h2>
+		<p class="mute big">Create one to organize articles by project, theme, or client.</p>
+	</div>
+</AppLayout>
+
+<style>
+.coll-grid { display: grid; gap: 14px; padding: 8px 0 60px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.coll-card {
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-lg);
+	padding: 18px;
+	display: flex; gap: 12px; align-items: center;
+	cursor: pointer;
+	transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+	text-decoration: none;
+	color: inherit;
+}
+.coll-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.coll-icon {
+	width: 56px; height: 56px;
+	border-radius: var(--radius-md);
+	background: var(--coral-100); color: var(--coral-700);
+	display: flex; align-items: center; justify-content: center;
+	font-size: 1.75rem;
+}
+.coll-card .name { font-weight: 700; font-size: 1.125rem; }
+.coll-card .count { font-size: var(--fs-sm); color: var(--text-muted); }
+.empty-state { text-align: center; padding: 80px 20px; }
+</style>
+
+<script>
+import { articles, collections, newId } from "../../lib/db";
+
+const list = document.querySelector<HTMLElement>("[data-coll-list]")!;
+const empty = document.querySelector<HTMLElement>("[data-empty]")!;
+const escapeHtml = (s: string) => s.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c] as string));
+
+document.querySelector<HTMLButtonElement>("[data-new-coll]")?.addEventListener("click", async () => {
+	const name = prompt("Collection name?");
+	if (!name) return;
+	const icon = prompt("Pick an emoji icon (e.g. 📚 🎯 ⚓️)") || "📚";
+	await collections.put({ id: newId("c_"), name, icon, createdAt: Date.now() });
+	render();
+});
+
+async function render() {
+	const [cs, all] = await Promise.all([collections.all(), articles.all()]);
+	if (!cs.length) { empty.hidden = false; list.innerHTML = ""; return; }
+	empty.hidden = true;
+	list.innerHTML = cs.map(c => {
+		const n = all.filter(a => a.collections.includes(c.id)).length;
+		return `<a class="coll-card" href="/collections/${c.id}">
+			<div class="coll-icon">${escapeHtml(c.icon)}</div>
+			<div><div class="name">${escapeHtml(c.name)}</div><div class="count">${n} item${n === 1 ? "" : "s"}</div></div>
+		</a>`;
+	}).join("");
+}
+render();
+</script>

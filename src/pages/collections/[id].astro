@@ -1,0 +1,77 @@
+---
+import AppLayout from "../../layouts/AppLayout.astro";
+import Icon from "../../components/Icon.astro";
+export const prerender = false;
+---
+
+<AppLayout title="Collection" pageTitle="" showBack={true}>
+	<header class="coll-head">
+		<div class="ic" data-icon></div>
+		<div>
+			<h1 data-name>Collection</h1>
+			<p class="mute" data-desc></p>
+		</div>
+		<div class="grow"></div>
+		<button class="btn btn--ghost" data-rename><Icon name="type" size={18} />Rename</button>
+		<button class="btn btn--danger" data-delete><Icon name="trash" size={18} />Delete</button>
+	</header>
+	<section class="lib" data-lib data-view="grid"></section>
+	<div class="empty-state" data-empty hidden>
+		<h2>Empty for now</h2>
+		<p class="mute big">Open any article and add it to this collection.</p>
+	</div>
+</AppLayout>
+
+<style>
+.coll-head { display: flex; gap: 16px; align-items: center; padding: 24px 0 16px; flex-wrap: wrap; }
+.ic { width: 64px; height: 64px; border-radius: var(--radius-lg); background: var(--coral-100); color: var(--coral-700); display:flex;align-items:center;justify-content:center; font-size: 2rem; }
+.empty-state { text-align: center; padding: 60px 20px; }
+</style>
+
+<script>
+import { articles, collections } from "../../lib/db";
+import { formatRelative, hostOf } from "../../lib/util";
+import { toast } from "../../lib/toast";
+
+const id = location.pathname.split("/").pop()!;
+const lib = document.querySelector<HTMLElement>("[data-lib]")!;
+const empty = document.querySelector<HTMLElement>("[data-empty]")!;
+const escapeHtml = (s: string) => s.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c] as string));
+
+(async () => {
+	const cs = await collections.all();
+	const c = cs.find(x => x.id === id);
+	if (!c) { document.body.innerHTML = "<p style='padding:40px'>Collection not found</p>"; return; }
+	(document.querySelector("[data-icon]") as HTMLElement).textContent = c.icon;
+	(document.querySelector("[data-name]") as HTMLElement).textContent = c.name;
+
+	const all = await articles.all();
+	const items = all.filter(a => a.collections.includes(id)).sort((a,b)=>b.savedAt-a.savedAt);
+	if (!items.length) { empty.hidden = false; return; }
+	lib.innerHTML = items.map(a => {
+		const cover = a.coverImage
+			? `<img class="cover" src="${a.coverImage}" alt="" loading="lazy" onerror="this.style.display='none'" />`
+			: `<div class="cover cover--fallback"><span>${hostOf(a.url).split(".")[0]?.[0]?.toUpperCase() || "·"}</span></div>`;
+		return `<article class="article-card card">
+			<a class="card-link" href="/article/${a.id}">${cover}</a>
+			<div class="card-body">
+				<div class="card-meta small mute"><span>${escapeHtml(hostOf(a.url))}</span><span>·</span><span>${escapeHtml(formatRelative(a.savedAt))}</span></div>
+				<h3 class="card-title"><a href="/article/${a.id}">${escapeHtml(a.title)}</a></h3>
+			</div>
+		</article>`;
+	}).join("");
+
+	document.querySelector<HTMLButtonElement>("[data-rename]")?.addEventListener("click", async () => {
+		const next = prompt("Rename collection:", c.name);
+		if (!next) return;
+		await collections.put({ ...c, name: next });
+		toast("Renamed");
+		(document.querySelector("[data-name]") as HTMLElement).textContent = next;
+	});
+	document.querySelector<HTMLButtonElement>("[data-delete]")?.addEventListener("click", async () => {
+		if (!confirm(`Delete "${c.name}"? Articles inside won't be deleted.`)) return;
+		await collections.remove(id);
+		location.href = "/collections";
+	});
+})();
+</script>

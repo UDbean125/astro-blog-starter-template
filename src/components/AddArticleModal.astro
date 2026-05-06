@@ -1,0 +1,80 @@
+---
+import Icon from "./Icon.astro";
+---
+
+<dialog class="dialog" data-add-modal aria-label="Save a new link">
+	<form class="dialog-inner" data-add-form>
+		<header class="dialog-head">
+			<h2>Save to Harbour</h2>
+			<button type="button" class="btn btn--icon btn--ghost" data-close aria-label="Close">
+				<Icon name="x" size={20} />
+			</button>
+		</header>
+
+		<div class="field">
+			<label for="add-url" class="lbl">Paste a URL</label>
+			<div class="url-row">
+				<Icon name="link" size={22} />
+				<input
+					id="add-url"
+					class="input"
+					name="url"
+					type="url"
+					placeholder="https://example.com/an-article"
+					autocomplete="off"
+					autocapitalize="off"
+					spellcheck="false"
+					required
+				/>
+			</div>
+			<p class="hint mute" data-hint>We'll pull the title, cover image, and readable text.</p>
+		</div>
+
+		<div class="field">
+			<label for="add-tags" class="lbl">Tags (optional)</label>
+			<input id="add-tags" class="input" name="tags" type="text" placeholder="design, startup, ai" />
+		</div>
+
+		<footer class="dialog-foot">
+			<button type="button" class="btn btn--ghost" data-close>Cancel</button>
+			<button type="submit" class="btn btn--primary btn--lg" data-submit>
+				<Icon name="save" size={20} />
+				<span>Save</span>
+			</button>
+		</footer>
+	</form>
+</dialog>
+
+<style>
+.dialog {
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: inherit;
+	max-width: 560px;
+	width: 100%;
+	margin: auto;
+}
+.dialog::backdrop { background: rgba(6,21,48,0.55); backdrop-filter: blur(2px); }
+.dialog-inner {
+	background: var(--surface);
+	border-radius: var(--radius-xl);
+	box-shadow: var(--shadow-lg);
+	padding: 24px 24px 20px;
+	display: flex; flex-direction: column; gap: 18px;
+	border: 1px solid var(--border);
+}
+.dialog-head { display: flex; align-items: center; justify-content: space-between; }
+.dialog-head h2 { margin: 0; font-size: 1.5rem; }
+.field { display: flex; flex-direction: column; gap: 8px; }
+.lbl { font-size: var(--fs-sm); font-weight: 700; color: var(--text-muted); letter-spacing: 0.01em; text-transform: uppercase; }
+.url-row { position: relative; display: flex; align-items: center; }
+.url-row .hicon { position: absolute; left: 14px; color: var(--text-muted); pointer-events: none; }
+.url-row .input { padding-left: 48px; font-size: var(--fs-lg); min-height: 56px; }
+.hint { font-size: var(--fs-sm); margin: 0; }
+.dialog-foot { display: flex; justify-content: flex-end; gap: 10px; padding-top: 4px; }
+
+@media (max-width: 520px) {
+	.dialog { padding: 12px; }
+}
+</style>

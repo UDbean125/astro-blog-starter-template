@@ -1,0 +1,114 @@
+---
+import Icon from "./Icon.astro";
+
+interface Props {
+	title?: string;
+	subtitle?: string;
+	showSearch?: boolean;
+	showViewSwitcher?: boolean;
+	showBack?: boolean;
+}
+
+const { title = "Library", subtitle, showSearch = true, showViewSwitcher = true, showBack = false } = Astro.props;
+---
+
+<header class="topbar">
+	<button class="btn btn--icon btn--ghost mobile-menu" data-mobile-menu aria-label="Open menu">
+		<Icon name="menu" size={22} />
+	</button>
+
+	{showBack && (
+		<a href="/" class="btn btn--icon btn--ghost" aria-label="Back to library">
+			<Icon name="arrowLeft" size={22} />
+		</a>
+	)}
+
+	<div class="title-block">
+		<h1 class="page-title">{title}</h1>
+		{subtitle && <p class="page-subtitle mute">{subtitle}</p>}
+	</div>
+
+	<div class="grow"></div>
+
+	{showSearch && (
+		<button class="search-btn" data-open-search aria-keyshortcuts="/">
+			<Icon name="search" size={20} />
+			<span>Search your library…</span>
+			<kbd class="kbd">/</kbd>
+		</button>
+	)}
+
+	{showViewSwitcher && (
+		<div class="view-switch" role="tablist" aria-label="View mode" data-view-switch>
+			<button class="view-btn" data-view="list" aria-label="List view" title="List"><Icon name="list" size={20} /></button>
+			<button class="view-btn" data-view="grid" aria-label="Grid view" title="Grid"><Icon name="grid" size={20} /></button>
+			<button class="view-btn" data-view="moodboard" aria-label="Moodboard view" title="Moodboard"><Icon name="moodboard" size={20} /></button>
+		</div>
+	)}
+</header>
+
+<style>
+.topbar {
+	position: sticky;
+	top: 0;
+	z-index: 10;
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	padding: 14px 28px;
+	height: var(--topbar-h);
+	background: color-mix(in srgb, var(--bg) 85%, transparent);
+	backdrop-filter: saturate(1.2) blur(8px);
+	border-bottom: 1px solid var(--border);
+}
+.title-block { line-height: 1.1; }
+.page-title { font-size: 1.75rem; margin: 0; letter-spacing: -0.025em; }
+.page-subtitle { margin: 2px 0 0; font-size: var(--fs-sm); }
+
+.search-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	min-height: 44px;
+	padding: 0 16px;
+	background: var(--surface);
+	color: var(--text-muted);
+	border: 2px solid var(--border);
+	border-radius: var(--radius-pill);
+	font-weight: 500;
+	cursor: pointer;
+	min-width: 280px;
+	transition: border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+.search-btn:hover { border-color: var(--border-strong); background: var(--bg-elevated); }
+.search-btn .kbd { margin-left: auto; font-family: var(--font-mono); font-size: 0.75rem; background: var(--surface-alt); padding: 2px 8px; border-radius: 6px; }
+
+.view-switch {
+	display: inline-flex;
+	padding: 4px;
+	background: var(--surface);
+	border: 2px solid var(--border);
+	border-radius: var(--radius-pill);
+	gap: 2px;
+}
+.view-btn {
+	width: 40px; height: 36px;
+	display: inline-flex; align-items: center; justify-content: center;
+	border: 0; background: transparent; color: var(--text-muted);
+	border-radius: var(--radius-pill); cursor: pointer;
+	transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.view-btn:hover { color: var(--text); }
+.view-btn[aria-pressed="true"] { background: var(--accent); color: var(--accent-contrast); }
+
+.mobile-menu { display: none; }
+@media (max-width: 900px) {
+	.topbar { padding: 10px 14px; gap: 8px; }
+	.mobile-menu { display: inline-flex; }
+	.search-btn { min-width: 0; }
+	.search-btn span:not(.kbd) { display: none; }
+	.search-btn .kbd { display: none; }
+	.page-title { font-size: 1.25rem; }
+	.page-subtitle { display: none; }
+}
+</style>

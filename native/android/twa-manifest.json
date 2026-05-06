@@ -1,0 +1,42 @@
+{
+  "packageId": "app.harbour.twa",
+  "host": "harbour.app",
+  "name": "Harbour",
+  "launcherName": "Harbour",
+  "display": "standalone",
+  "themeColor": "#0F2547",
+  "navigationColor": "#0F2547",
+  "navigationColorDark": "#0A1426",
+  "navigationDividerColor": "#0F2547",
+  "navigationDividerColorDark": "#0A1426",
+  "backgroundColor": "#FDFAF3",
+  "enableNotifications": false,
+  "startUrl": "/",
+  "iconUrl": "https://harbour.app/icons/icon-512.png",
+  "maskableIconUrl": "https://harbour.app/icons/icon-maskable-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "android"
+  },
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [
+    { "name": "Save a link", "shortName": "Save", "url": "/?save=", "chosenIdx": 0 },
+    { "name": "Highlights", "shortName": "Highlights", "url": "/highlights" }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://harbour.app/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {
+    "playBilling": { "enabled": false },
+    "locationDelegation": { "enabled": false }
+  },
+  "alphaDependencies": { "enabled": false },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://harbour.app/",
+  "minSdkVersion": 21,
+  "orientation": "default"
+}

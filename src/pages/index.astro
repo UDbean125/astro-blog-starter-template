@@ -1,50 +1,346 @@
 ---
-import BaseHead from '../components/BaseHead.astro';
-import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
-import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
+import AppLayout from "../layouts/AppLayout.astro";
+import Icon from "../components/Icon.astro";
 ---
 
-<!doctype html>
-<html lang="en">
-	<head>
-		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
-	</head>
-	<body>
-		<Header />
-		<main>
-			<h1>🧑‍🚀 Hello, Astronaut!</h1>
-			<p>
-				Welcome to the official <a href="https://astro.build/">Astro</a> blog starter template. This
-				template serves as a lightweight, minimally-styled starting point for anyone looking to build
-				a personal website, blog, or portfolio with Astro.
-			</p>
-			<p>
-				This template comes with a few integrations already configured in your
-				<code>astro.config.mjs</code> file. You can customize your setup with
-				<a href="https://astro.build/integrations">Astro Integrations</a> to add tools like Tailwind,
-				React, or Vue to your project.
-			</p>
-			<p>Here are a few ideas on how to get started with the template:</p>
-			<ul>
-				<li>Edit this page in <code>src/pages/index.astro</code></li>
-				<li>Edit the site header items in <code>src/components/Header.astro</code></li>
-				<li>Add your name to the footer in <code>src/components/Footer.astro</code></li>
-				<li>Check out the included blog posts in <code>src/content/blog/</code></li>
-				<li>Customize the blog post page layout in <code>src/layouts/BlogPost.astro</code></li>
-			</ul>
-			<p>
-				Have fun! If you get stuck, remember to <a href="https://docs.astro.build/"
-					>read the docs
-				</a> or <a href="https://astro.build/chat">join us on Discord</a> to ask questions.
-			</p>
-			<p>
-				Looking for a blog template with a bit more personality? Check out <a
-					href="https://github.com/Charca/astro-blog-template"
-					>astro-blog-template
-				</a> by <a href="https://twitter.com/Charca">Maxi Ferreira</a>.
-			</p>
-		</main>
-		<Footer />
-	</body>
-</html>
+<AppLayout title="Library" pageTitle="Library" subtitle="Everything you've saved, ready to read or listen.">
+
+	<section class="lib-toolbar">
+		<div class="filter-chips" data-filters>
+			<button class="chip chip--brand is-on" data-filter="inbox">Inbox</button>
+			<button class="chip" data-filter="reading">Reading</button>
+			<button class="chip" data-filter="favorites">Favorites</button>
+			<button class="chip" data-filter="all">All</button>
+		</div>
+		<div class="grow"></div>
+		<label class="sort-field">
+			<span class="sr-only">Sort by</span>
+			<select class="select select--sm" data-sort>
+				<option value="newest">Newest first</option>
+				<option value="oldest">Oldest first</option>
+				<option value="title">Title (A–Z)</option>
+				<option value="unread">Unread first</option>
+				<option value="longest">Longest</option>
+				<option value="shortest">Shortest</option>
+			</select>
+		</label>
+	</section>
+
+	<section class="empty-state" data-empty hidden>
+		<div class="empty-art">
+			<Icon name="anchor" size={56} />
+		</div>
+		<h2>Your harbour is empty</h2>
+		<p class="mute big">Save your first link to start building a calmer reading queue.</p>
+		<div class="empty-actions">
+			<button class="btn btn--primary btn--lg" data-open-add>
+				<Icon name="plus" size={22} /> Save a link
+			</button>
+			<button class="btn btn--ghost btn--lg" data-open-search>
+				<Icon name="search" size={22} /> Search
+			</button>
+		</div>
+		<p class="mute small">Tip: drag the bookmarklet in <a href="/settings">Settings</a> to your browser bar for one-click saves.</p>
+	</section>
+
+	<section class="bulk-bar" data-bulk hidden>
+		<span data-bulk-count>0 selected</span>
+		<div class="grow"></div>
+		<button class="btn btn--sm btn--ghost" data-bulk-action="favorite"><Icon name="star" size={18} />Favorite</button>
+		<button class="btn btn--sm btn--ghost" data-bulk-action="archive"><Icon name="archive" size={18} />Archive</button>
+		<button class="btn btn--sm btn--ghost" data-bulk-action="unread"><Icon name="inboxArrow" size={18} />Mark unread</button>
+		<button class="btn btn--sm btn--danger" data-bulk-action="delete"><Icon name="trash" size={18} />Delete</button>
+		<button class="btn btn--sm btn--ghost" data-bulk-action="clear">Done</button>
+	</section>
+
+	<section class="lib" data-lib data-view="grid" aria-label="Saved articles"></section>
+
+</AppLayout>
+
+<style>
+.lib-toolbar {
+	display: flex; align-items: center; gap: 12px;
+	padding: 20px 0 12px;
+	position: sticky;
+	top: var(--topbar-h);
+	background: var(--bg);
+	z-index: 5;
+	flex-wrap: wrap;
+}
+.filter-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.filter-chips .chip { cursor: pointer; user-select: none; transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease); }
+.filter-chips .chip.is-on { background: var(--brand); color: var(--brand-contrast); border-color: transparent; }
+.select--sm { min-height: 40px; padding: 4px 12px; border-radius: var(--radius-pill); font-size: var(--fs-sm); min-width: 160px; }
+
+.empty-state {
+	margin: 8vh auto;
+	max-width: 520px;
+	text-align: center;
+	padding: 40px 20px;
+}
+.empty-art {
+	width: 108px; height: 108px; margin: 0 auto 20px;
+	background: var(--coral-100);
+	color: var(--coral-700);
+	border-radius: 50%;
+	display: flex; align-items: center; justify-content: center;
+	box-shadow: var(--shadow-md);
+}
+html[data-theme="dark"] .empty-art { background: rgba(255,91,58,0.2); color: var(--coral-300); }
+.empty-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 20px 0 12px; }
+
+.bulk-bar {
+	display: flex; align-items: center; gap: 8px; padding: 12px 16px;
+	background: var(--navy-100); color: var(--navy-700);
+	border-radius: var(--radius-lg);
+	margin: 8px 0 16px;
+	font-weight: 600;
+	flex-wrap: wrap;
+}
+html[data-theme="dark"] .bulk-bar { background: rgba(255,255,255,0.08); color: var(--text); }
+
+.lib { display: grid; gap: 16px; padding: 8px 0 40px; }
+.lib[data-view="grid"] {
+	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+.lib[data-view="list"] {
+	grid-template-columns: 1fr;
+}
+.lib[data-view="moodboard"] {
+	columns: 4 220px;
+	column-gap: 16px;
+	display: block;
+}
+.lib[data-view="moodboard"] .article-card {
+	break-inside: avoid;
+	margin-bottom: 16px;
+}
+</style>
+
+<script>
+import { articles, collections, newId } from "../lib/db";
+import type { Article } from "../lib/types";
+import { loadSettings, saveSettings } from "../lib/settings";
+import { toast } from "../lib/toast";
+import { formatRelative, hostOf, sortArticles } from "../lib/util";
+import { icon } from "../lib/icons";
+
+const lib = document.querySelector<HTMLElement>("[data-lib]")!;
+const emptyEl = document.querySelector<HTMLElement>("[data-empty]")!;
+const filtersEl = document.querySelector<HTMLElement>("[data-filters]")!;
+const sortEl = document.querySelector<HTMLSelectElement>("[data-sort]")!;
+const bulkBar = document.querySelector<HTMLElement>("[data-bulk]")!;
+const bulkCount = document.querySelector<HTMLElement>("[data-bulk-count]")!;
+
+let all: Article[] = [];
+let filter: "inbox" | "reading" | "favorites" | "all" = "inbox";
+const selected = new Set<string>();
+
+function applySettings() {
+	const s = loadSettings();
+	lib.dataset.view = s.view;
+	sortEl.value = s.sort;
+	document.querySelectorAll<HTMLButtonElement>("[data-view-switch] [data-view]").forEach(b => {
+		b.setAttribute("aria-pressed", b.dataset.view === s.view ? "true" : "false");
+	});
+}
+
+document.querySelectorAll<HTMLButtonElement>("[data-view-switch] [data-view]").forEach(b => {
+	b.addEventListener("click", () => {
+		const v = b.dataset.view as "list" | "grid" | "moodboard";
+		saveSettings({ view: v });
+		applySettings();
+		render();
+	});
+});
+sortEl.addEventListener("change", () => {
+	saveSettings({ sort: sortEl.value as any });
+	render();
+});
+filtersEl.querySelectorAll<HTMLButtonElement>("[data-filter]").forEach(b => {
+	b.addEventListener("click", () => {
+		filter = b.dataset.filter as any;
+		filtersEl.querySelectorAll(".chip").forEach(c => c.classList.toggle("is-on", c === b));
+		render();
+	});
+});
+
+function matchesFilter(a: Article): boolean {
+	if (filter === "favorites") return a.isFavorite;
+	if (filter === "reading") return a.status === "reading" || (a.progress > 0 && a.progress < 1);
+	if (filter === "inbox") return a.status === "inbox";
+	return a.status !== "trashed";
+}
+
+function cardHtml(a: Article): string {
+	const site = hostOf(a.url);
+	const time = formatRelative(a.savedAt);
+	const mins = a.readingMinutes ? `${a.readingMinutes} min` : "";
+	const progress = Math.round((a.progress || 0) * 100);
+	const cover = a.coverImage
+		? `<img class="cover" src="${a.coverImage}" alt="" loading="lazy" onerror="this.style.display='none'" />`
+		: `<div class="cover cover--fallback"><span>${site.split(".")[0]?.slice(0,1).toUpperCase() || "·"}</span></div>`;
+	const fav = a.favicon ? `<img class="fav" src="${a.favicon}" alt="" loading="lazy" />` : "";
+	const starIcon = a.isFavorite ? icon("starFill", 20) : icon("star", 20);
+	const selectedAttr = selected.has(a.id) ? "true" : "false";
+
+	return `
+	<article class="article-card card" data-id="${a.id}" data-selected="${selectedAttr}">
+		<label class="select-check" aria-label="Select">
+			<input type="checkbox" data-check ${selected.has(a.id) ? "checked" : ""} />
+		</label>
+		<a class="card-link" href="/article/${a.id}" aria-label="Open ${escapeAttr(a.title)}">
+			${cover}
+		</a>
+		<div class="card-body">
+			<div class="card-meta small mute">
+				${fav}
+				<span>${escapeHtml(site)}</span>
+				${mins ? `<span>·</span><span>${mins}</span>` : ""}
+				<span>·</span><span>${escapeHtml(time)}</span>
+			</div>
+			<h3 class="card-title"><a href="/article/${a.id}">${escapeHtml(a.title)}</a></h3>
+			${a.description ? `<p class="card-desc truncate" style="--lines:3">${escapeHtml(a.description)}</p>` : ""}
+			${a.tags.length ? `<div class="card-tags">${a.tags.slice(0, 4).map(t => `<span class="chip chip--sea">${escapeHtml(t)}</span>`).join("")}</div>` : ""}
+			${progress > 0 && progress < 100 ? `<div class="progress" aria-label="Read progress ${progress}%"><div class="progress-bar" style="width:${progress}%"></div></div>` : ""}
+		</div>
+		<div class="card-actions">
+			<button class="btn btn--icon btn--ghost btn--sm" data-act="fav" title="Favorite">${starIcon}</button>
+			<a class="btn btn--icon btn--ghost btn--sm" href="/article/${a.id}?listen=1" title="Listen">${icon("headphones", 20)}</a>
+			<button class="btn btn--icon btn--ghost btn--sm" data-act="archive" title="Archive">${icon("archive", 20)}</button>
+			<button class="btn btn--icon btn--ghost btn--sm" data-act="delete" title="Delete">${icon("trash", 20)}</button>
+		</div>
+	</article>`;
+}
+
+function render() {
+	const s = loadSettings();
+	const filtered = sortArticles(all.filter(matchesFilter), s.sort);
+	if (!all.length) {
+		emptyEl.hidden = false;
+		lib.innerHTML = "";
+		return;
+	}
+	emptyEl.hidden = true;
+
+	if (filtered.length === 0) {
+		lib.innerHTML = `<div class="empty-filtered"><p class="mute big">Nothing here yet. Try another filter.</p></div>`;
+		return;
+	}
+
+	lib.innerHTML = filtered.map(cardHtml).join("");
+}
+
+lib.addEventListener("click", async (e) => {
+	const t = e.target as HTMLElement;
+	const card = t.closest<HTMLElement>(".article-card");
+	if (!card) return;
+	const id = card.dataset.id!;
+	const check = t.closest<HTMLInputElement>("[data-check]");
+	if (check) {
+		e.preventDefault();
+		setTimeout(() => {
+			if (check.checked) selected.add(id); else selected.delete(id);
+			card.dataset.selected = selected.has(id) ? "true" : "false";
+			updateBulkBar();
+		});
+		return;
+	}
+	const actBtn = t.closest<HTMLButtonElement>("[data-act]");
+	if (actBtn) {
+		e.preventDefault();
+		const a = all.find(x => x.id === id);
+		if (!a) return;
+		if (actBtn.dataset.act === "fav") {
+			a.isFavorite = !a.isFavorite;
+			a.updatedAt = Date.now();
+			await articles.put(a);
+			render();
+		} else if (actBtn.dataset.act === "archive") {
+			a.status = a.status === "archived" ? "inbox" : "archived";
+			a.updatedAt = Date.now();
+			await articles.put(a);
+			toast(a.status === "archived" ? "Archived" : "Restored");
+			all = await articles.all();
+			render();
+		} else if (actBtn.dataset.act === "delete") {
+			if (confirm(`Delete "${a.title}"?`)) {
+				await articles.remove(id);
+				toast("Deleted");
+				all = await articles.all();
+				render();
+			}
+		}
+	}
+});
+
+function updateBulkBar() {
+	if (selected.size === 0) { bulkBar.hidden = true; return; }
+	bulkBar.hidden = false;
+	bulkCount.textContent = `${selected.size} selected`;
+}
+
+bulkBar.addEventListener("click", async (e) => {
+	const b = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-bulk-action]");
+	if (!b) return;
+	const action = b.dataset.bulkAction!;
+	const ids = Array.from(selected);
+	if (action === "clear") { selected.clear(); updateBulkBar(); render(); return; }
+	if (action === "delete" && !confirm(`Delete ${ids.length} items?`)) return;
+	for (const id of ids) {
+		const a = all.find(x => x.id === id);
+		if (!a) continue;
+		if (action === "favorite") a.isFavorite = !a.isFavorite;
+		else if (action === "archive") a.status = "archived";
+		else if (action === "unread") { a.isUnread = true; a.progress = 0; }
+		else if (action === "delete") { await articles.remove(id); continue; }
+		a.updatedAt = Date.now();
+		await articles.put(a);
+	}
+	toast(`Updated ${ids.length} items`);
+	selected.clear();
+	all = await articles.all();
+	updateBulkBar();
+	render();
+});
+
+window.addEventListener("harbour:article-saved", async () => {
+	all = await articles.all();
+	render();
+});
+
+function escapeHtml(s: string): string {
+	return s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
+}
+function escapeAttr(s: string): string { return escapeHtml(s); }
+
+(async () => {
+	applySettings();
+	all = await articles.all();
+	// Seed example data on first visit for delight
+	if (all.length === 0 && !localStorage.getItem("harbour.seeded")) {
+		const seed: Article[] = [
+			{
+				id: newId("a_"), url: "https://paulgraham.com/greatwork.html", urlKey: "paulgraham.com/greatwork.html",
+				title: "How to Do Great Work", description: "A synthesis of advice on choosing work you love and doing it well.",
+				siteName: "Paul Graham", author: "Paul Graham", favicon: "https://icons.duckduckgo.com/ip3/paulgraham.com.ico",
+				coverImage: undefined, savedAt: Date.now() - 86400000, updatedAt: Date.now() - 86400000,
+				wordCount: 12000, readingMinutes: 53, tags: ["career", "essay"], collections: [],
+				status: "inbox", type: "article", isFavorite: true, isUnread: true, progress: 0,
+			},
+			{
+				id: newId("a_"), url: "https://www.nngroup.com/articles/big-buttons/", urlKey: "nngroup.com/articles/big-buttons",
+				title: "Big, Bold Buttons: When Clear Beats Clever", description: "On hit targets and visual weight in product UI.",
+				siteName: "Nielsen Norman Group", favicon: "https://icons.duckduckgo.com/ip3/nngroup.com.ico",
+				savedAt: Date.now() - 3 * 3600000, updatedAt: Date.now() - 3 * 3600000,
+				wordCount: 1800, readingMinutes: 8, tags: ["design", "ux"], collections: [],
+				status: "inbox", type: "article", isFavorite: false, isUnread: true, progress: 0.2,
+			},
+		];
+		for (const s of seed) await articles.put(s);
+		localStorage.setItem("harbour.seeded", "1");
+		all = await articles.all();
+	}
+	render();
+})();
+</script>

@@ -1,0 +1,79 @@
+---
+import BaseHead from "../components/BaseHead.astro";
+import Sidebar from "../components/Sidebar.astro";
+import Topbar from "../components/Topbar.astro";
+import AddArticleModal from "../components/AddArticleModal.astro";
+import CommandBar from "../components/CommandBar.astro";
+import { SITE_TITLE, SITE_DESCRIPTION } from "../consts";
+
+interface Props {
+	title?: string;
+	pageTitle?: string;
+	subtitle?: string;
+	description?: string;
+	showSearch?: boolean;
+	showViewSwitcher?: boolean;
+	showBack?: boolean;
+	hideChrome?: boolean;
+}
+
+const {
+	title,
+	pageTitle = "Library",
+	subtitle,
+	description = SITE_DESCRIPTION,
+	showSearch = true,
+	showViewSwitcher = true,
+	showBack = false,
+	hideChrome = false,
+} = Astro.props;
+
+const fullTitle = title ? `${title} · ${SITE_TITLE}` : SITE_TITLE;
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={fullTitle} description={description} />
+	</head>
+	<body class={hideChrome ? "is-chromeless" : ""}>
+		<div class="app-shell" data-shell>
+			{!hideChrome && <Sidebar />}
+			<main class="main">
+				{!hideChrome && <Topbar title={pageTitle} subtitle={subtitle} showSearch={showSearch} showViewSwitcher={showViewSwitcher} showBack={showBack} />}
+				<div class="content">
+					<slot />
+				</div>
+			</main>
+		</div>
+
+		<AddArticleModal />
+		<CommandBar />
+
+		<script>
+			import "../scripts/app.ts";
+		</script>
+
+		<style is:global>
+			.app-shell {
+				display: grid;
+				grid-template-columns: var(--nav-w) 1fr;
+				grid-template-areas: "side main";
+				min-height: 100vh;
+			}
+			body.is-chromeless .app-shell { grid-template-columns: 1fr; grid-template-areas: "main"; }
+			.main { grid-area: main; display: flex; flex-direction: column; min-width: 0; }
+			.content { flex: 1; padding: 0 28px 60px; max-width: var(--content-max); width: 100%; margin: 0 auto; }
+			.sidebar[data-collapsed="true"] + .main .content { /* nothing */ }
+			/* react to sidebar collapse width */
+			.app-shell:has(.sidebar[data-collapsed="true"]) {
+				grid-template-columns: var(--nav-w-collapsed) 1fr;
+			}
+			@media (max-width: 900px) {
+				.app-shell { grid-template-columns: 1fr; grid-template-areas: "main"; }
+				.app-shell:has(.sidebar[data-collapsed="true"]) { grid-template-columns: 1fr; }
+				.content { padding: 0 14px 60px; }
+			}
+		</style>
+	</body>
+</html>

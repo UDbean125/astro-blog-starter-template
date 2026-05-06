@@ -1,0 +1,41 @@
+---
+import AppLayout from "../layouts/AppLayout.astro";
+---
+
+<AppLayout title="Reading Now" pageTitle="Reading Now" subtitle="Pick up where you left off." showViewSwitcher={false}>
+	<section class="lib" data-lib data-view="list"></section>
+	<div class="empty-state" data-empty hidden>
+		<h2>Nothing in progress</h2>
+		<p class="mute big">Start reading any article and it'll appear here.</p>
+	</div>
+</AppLayout>
+
+<script>
+import { articles } from "../lib/db";
+import { formatRelative, hostOf } from "../lib/util";
+
+const lib = document.querySelector<HTMLElement>("[data-lib]")!;
+const empty = document.querySelector<HTMLElement>("[data-empty]")!;
+const escapeHtml = (s: string) => s.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c] as string));
+
+(async () => {
+	const all = (await articles.all())
+		.filter(a => a.progress > 0 && a.progress < 1 && a.status !== "trashed")
+		.sort((a, b) => b.updatedAt - a.updatedAt);
+	if (!all.length) { empty.hidden = false; return; }
+	lib.innerHTML = all.map(a => {
+		const pct = Math.round(a.progress * 100);
+		const cover = a.coverImage
+			? `<img class="cover" src="${a.coverImage}" alt="" loading="lazy" onerror="this.style.display='none'" />`
+			: `<div class="cover cover--fallback"><span>${hostOf(a.url).split(".")[0]?.[0]?.toUpperCase() || "·"}</span></div>`;
+		return `<article class="article-card card">
+			<a class="card-link" href="/article/${a.id}">${cover}</a>
+			<div class="card-body">
+				<div class="card-meta small mute"><span>${escapeHtml(hostOf(a.url))}</span><span>·</span><span>${pct}% read</span></div>
+				<h3 class="card-title"><a href="/article/${a.id}">${escapeHtml(a.title)}</a></h3>
+				<div class="progress"><div class="progress-bar" style="width:${pct}%"></div></div>
+			</div>
+		</article>`;
+	}).join("");
+})();
+</script>

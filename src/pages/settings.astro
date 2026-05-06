@@ -1,0 +1,152 @@
+---
+import AppLayout from "../layouts/AppLayout.astro";
+import Icon from "../components/Icon.astro";
+---
+
+<AppLayout title="Settings" pageTitle="Settings" subtitle="Make Harbour yours." showSearch={true} showViewSwitcher={false}>
+	<section class="settings stack">
+		<div class="card pad">
+			<h2>Appearance</h2>
+			<div class="row row--wrap" style="gap: 8px;">
+				<button class="btn btn--ghost" data-theme="light"><Icon name="sun" size={18} />Light</button>
+				<button class="btn btn--ghost" data-theme="dark"><Icon name="moon" size={18} />Dark</button>
+				<button class="btn btn--ghost" data-theme="system"><Icon name="settings" size={18} />System</button>
+			</div>
+		</div>
+
+		<div class="card pad">
+			<h2>Bookmarklet</h2>
+			<p class="mute">Drag this to your bookmarks bar to save the current page to Harbour with one click.</p>
+			<p style="margin-top: 14px;"><a class="btn btn--primary btn--lg" data-bookmarklet href="#" draggable="true"><Icon name="anchor" size={20} />Save to Harbour</a></p>
+			<p class="small mute" style="margin-top: 14px;">Works in any browser. On iOS, save it as a bookmark and use the Share sheet.</p>
+		</div>
+
+		<div class="card pad">
+			<h2>Browser extensions</h2>
+			<p class="mute">For one-click saving from any tab.</p>
+			<div class="row row--wrap" style="gap: 8px; margin-top: 12px;">
+				<a class="btn btn--ghost" href="/extension.zip"><Icon name="download" size={18} />Chrome / Edge / Brave (.zip)</a>
+				<a class="btn btn--ghost" href="/extension.zip"><Icon name="download" size={18} />Safari (web ext)</a>
+			</div>
+			<p class="small mute" style="margin-top: 12px;">For Chrome: unzip → chrome://extensions → "Load unpacked". For Safari: <code>xcrun safari-web-extension-converter ./extension</code> (Mac).</p>
+		</div>
+
+		<div class="card pad">
+			<h2>Native apps</h2>
+			<p class="mute">Install as a Progressive Web App for the closest thing to a native experience on every platform.</p>
+			<div class="install-grid">
+				<div><strong>iOS / iPadOS</strong><br/><span class="mute small">Open Safari → Share → "Add to Home Screen"</span></div>
+				<div><strong>Android</strong><br/><span class="mute small">Open Chrome → Menu → "Install app"</span></div>
+				<div><strong>macOS</strong><br/><span class="mute small">Open Safari → File → "Add to Dock"</span></div>
+				<div><strong>Windows</strong><br/><span class="mute small">Open Edge → "Install Harbour"</span></div>
+			</div>
+			<p class="small mute" style="margin-top: 12px;">Native Xcode &amp; Android Studio wrappers are in the repo under <code>/native/</code> for store distribution.</p>
+		</div>
+
+		<div class="card pad">
+			<h2>Data</h2>
+			<div class="row row--wrap" style="gap: 8px;">
+				<button class="btn btn--ghost" data-export><Icon name="download" size={18} />Export JSON</button>
+				<label class="btn btn--ghost"><Icon name="upload" size={18} />Import<input type="file" accept="application/json" data-import hidden /></label>
+				<button class="btn btn--ghost" data-find-dupes><Icon name="duplicate" size={18} />Find duplicates</button>
+				<button class="btn btn--danger" data-wipe><Icon name="trash" size={18} />Erase everything</button>
+			</div>
+			<p class="small mute" style="margin-top: 8px;">Harbour stores your library locally on this device. Use Export to back it up.</p>
+		</div>
+
+		<div class="card pad">
+			<h2>Keyboard shortcuts</h2>
+			<dl class="kbd-grid">
+				<dt><kbd>⌘K</kbd> / <kbd>/</kbd></dt><dd>Open search</dd>
+				<dt><kbd>N</kbd></dt><dd>Save a new link</dd>
+				<dt><kbd>G</kbd> then <kbd>L</kbd></dt><dd>Go to Library</dd>
+				<dt><kbd>G</kbd> then <kbd>H</kbd></dt><dd>Go to Highlights</dd>
+				<dt><kbd>G</kbd> then <kbd>A</kbd></dt><dd>Go to Archive</dd>
+				<dt><kbd>G</kbd> then <kbd>S</kbd></dt><dd>Go to Settings</dd>
+			</dl>
+		</div>
+	</section>
+</AppLayout>
+
+<style>
+.settings { --gap: 18px; padding: 24px 0 80px; }
+.card.pad { padding: 22px 24px; }
+.kbd-grid { display: grid; grid-template-columns: 200px 1fr; gap: 8px 18px; margin: 12px 0 0; }
+.kbd-grid dt { font-family: var(--font-mono); }
+.kbd-grid kbd { background: var(--bg-sunken); padding: 2px 8px; border-radius: 6px; font-family: var(--font-mono); font-size: 0.85rem; }
+.install-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-top: 12px; }
+.install-grid > div { background: var(--bg-sunken); padding: 14px; border-radius: var(--radius-md); }
+</style>
+
+<script>
+import { exportAll, importAll, articles, urlKey, wipe } from "../lib/db";
+import { applyTheme, loadSettings, saveSettings } from "../lib/settings";
+import { toast } from "../lib/toast";
+
+document.querySelectorAll<HTMLButtonElement>("[data-theme]").forEach(b => {
+	b.addEventListener("click", () => {
+		const theme = b.dataset.theme as "light" | "dark" | "system";
+		saveSettings({ theme });
+		applyTheme(theme);
+		toast(`Theme: ${theme}`);
+	});
+});
+
+document.querySelector<HTMLButtonElement>("[data-export]")?.addEventListener("click", async () => {
+	const data = await exportAll();
+	const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+	const u = URL.createObjectURL(blob);
+	const a = document.createElement("a");
+	a.href = u; a.download = `harbour-export-${new Date().toISOString().slice(0,10)}.json`;
+	a.click();
+	URL.revokeObjectURL(u);
+	toast("Exported");
+});
+
+document.querySelector<HTMLInputElement>("[data-import]")?.addEventListener("change", async (e) => {
+	const f = (e.target as HTMLInputElement).files?.[0];
+	if (!f) return;
+	try {
+		const txt = await f.text();
+		const json = JSON.parse(txt);
+		const r = await importAll(json);
+		toast(`Imported ${r.articles} articles, ${r.highlights} highlights, ${r.collections} collections`);
+		setTimeout(() => location.reload(), 800);
+	} catch (err) {
+		toast("Import failed: invalid JSON");
+	}
+});
+
+document.querySelector<HTMLButtonElement>("[data-find-dupes]")?.addEventListener("click", async () => {
+	const all = await articles.all();
+	const buckets: Record<string, typeof all> = {};
+	for (const a of all) {
+		(buckets[a.urlKey] ??= []).push(a);
+	}
+	const dupes = Object.values(buckets).filter(b => b.length > 1);
+	if (!dupes.length) { toast("No duplicates found ✓"); return; }
+	const total = dupes.reduce((n, b) => n + b.length - 1, 0);
+	if (!confirm(`${dupes.length} duplicate group${dupes.length === 1 ? "" : "s"} (${total} extra item${total === 1 ? "" : "s"}). Keep the oldest in each group and delete the rest?`)) return;
+	for (const group of dupes) {
+		const sorted = group.sort((a, b) => a.savedAt - b.savedAt);
+		for (const dup of sorted.slice(1)) await articles.remove(dup.id);
+	}
+	toast(`Removed ${total} duplicates`);
+});
+
+document.querySelector<HTMLButtonElement>("[data-wipe]")?.addEventListener("click", async () => {
+	if (!confirm("This deletes ALL articles, highlights, and collections on this device. Are you sure?")) return;
+	if (!confirm("Last chance. Really erase everything?")) return;
+	await wipe();
+	localStorage.removeItem("harbour.seeded");
+	toast("Wiped");
+	setTimeout(() => location.href = "/", 600);
+});
+
+// Bookmarklet
+const bm = document.querySelector<HTMLAnchorElement>("[data-bookmarklet]");
+if (bm) {
+	const origin = location.origin;
+	bm.href = `javascript:(function(){window.open('${origin}/?save='+encodeURIComponent(location.href),'_blank');})();`;
+}
+</script>

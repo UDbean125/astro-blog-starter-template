@@ -200,3 +200,15 @@ dist
 
 ### Astro ###
 .astro/
+
+### Harbour ###
+# Native build artifacts
+native/apple/build/
+native/apple/DerivedData/
+native/apple/*.xcuserdata
+native/apple/*.xcworkspace/xcuserdata/
+native/android/app/build/
+native/android/build/
+native/android/.gradle/
+native/android/local.properties
+native/android/android.keystore
